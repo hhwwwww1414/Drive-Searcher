@@ -1,0 +1,15 @@
+corridor_id,name,color,order
+VLADIVOSTOK,Владивосток,#0078BF,10
+SEVER,Север,#44B85C,20
+MURMANSK,Мурманск,#B0BFE7,30
+M6,М6,#FFCB31,40
+KAVKAZ,Кавказ,#8E479C,50
+KRASNODAR,Краснодар,#F58631,60
+VLADIKAVKAZ,Владикавказ,#894E35,70
+ORSK,Орск,#27303F,80
+KRYM,Крым,#0078BF,90
+VLADIVOSTOK-KRASNODAR,Владивосток–Краснодар,#DE64A1,100
+KALININGRAD,Калининград,#B3D445,110
+MINSK,Минск,#808080,120
+BELGOROD,Белгород,#FF0000,130
+OT-KRUPNYH-GORODOV,От крупных городов,#555555,140

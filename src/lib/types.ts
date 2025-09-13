@@ -1,0 +1,56 @@
+export type DriverRow = Record<string, string>
+
+export type Driver = {
+  id: number
+  name: string
+  phone: string
+  rawName: string
+  pairs: [string, string][]
+  chains: string[][]
+  branches: string[]
+  corridors: string[]
+}
+
+export type Indices = {
+  pairExact: Map<string, Set<number>>
+  subpathDir: Map<string, Set<number>>
+  subpathUnd: Map<string, Set<number>>
+  edgeDrivers: Map<string, Set<number>>
+  adj: Map<string, Set<string>>
+}
+
+export type SearchInput = {
+  from: string
+  to: string
+}
+
+export type ExactResult = {
+  driverId: number
+  chain: string[]
+}
+
+export type GeoResult = {
+  driverId: number
+  chain: string[]
+}
+
+export type CompositeSegment = {
+  from: string
+  to: string
+  path: string[]
+  driverId: number | null
+}
+
+export type CompositeResult = {
+  path: string[]
+  segments: CompositeSegment[]
+  // optional meta used internally for ranking
+  _meta?: { segmentsCount: number; score: number }
+}
+
+export type SearchResults = {
+  exact: ExactResult[]
+  geo: GeoResult[]
+  composite: CompositeResult | null
+  compositeAlts?: CompositeResult[]
+}
