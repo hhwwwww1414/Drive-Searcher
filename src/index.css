@@ -2,6 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Root sizing & gradient background */
 html, body, #root { height: 100%; }
-body { @apply bg-gray-50 text-gray-900; }
+
+@layer base {
+  :root {
+    /* Brand colors */
+    --color-primary-from: #4F46E5;
+    --color-primary-to: #7C3AED;
+    /* Background gradients */
+    --bg-grad-light-from: #F3F8FF; /* light blue */
+    --bg-grad-light-to: #FFF8F0;   /* warm cream */
+    --bg-grad-dark-from: #0B1221;  /* slate-ish */
+    --bg-grad-dark-to: #0A0F1A;    /* deep slate */
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    @apply font-sans leading-relaxed text-neutral-800 dark:text-neutral-100 antialiased;
+    background: linear-gradient(135deg, var(--bg-grad-light-from) 0%, var(--bg-grad-light-to) 100%);
+  }
+
+  .dark body, body.dark {
+    background: linear-gradient(135deg, var(--bg-grad-dark-from) 0%, var(--bg-grad-dark-to) 100%);
+  }
+
+  /* Typography scale */
+  h1 { @apply font-heading text-4xl md:text-5xl font-semibold leading-tight tracking-tight; }
+  h2 { @apply font-heading text-3xl md:text-4xl font-semibold leading-snug; }
+  h3 { @apply font-heading text-2xl md:text-3xl font-medium leading-snug; }
+  p  { @apply text-base leading-7; }
+small, .caption { @apply text-sm leading-6 text-neutral-600 dark:text-neutral-300; }
+}
+
+@layer base {
+  input, select, textarea { @apply rounded-xl px-3 py-2 bg-white/70 dark:bg-white/5 backdrop-blur border border-white/40 dark:border-white/10 shadow-soft-inset placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500; }
+}
+
+@layer components {
+  /* Buttons */
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-medium transition-all duration-200 ease-swift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2; }
+  .btn-primary { @apply text-white bg-[color:var(--color-primary-from)] bg-gradient-primary shadow-elev-1 hover:shadow-elev-2 hover:scale-[1.01] active:scale-[.99]; }
+  .btn-ghost { @apply text-neutral-700 dark:text-neutral-200 bg-white/0 hover:bg-white/10 border border-white/10; }
+
+  /* Inputs (neumorphism-inspired) */
+  .input { @apply w-full rounded-xl px-3 py-2 bg-white/70 dark:bg-white/5 backdrop-blur border border-white/40 dark:border-white/10 shadow-soft-inset placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500; }
+
+  /* Cards */
+  .card { @apply rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur shadow-elev-1 border border-white/40 dark:border-white/10; }
+  .glass { @apply bg-glass backdrop-blur; }
+
+  /* Badges */
+  .badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-neutral-100 text-neutral-700 dark:bg-white/10 dark:text-neutral-200; }
+
+  /* Modals */
+  .modal-backdrop { @apply fixed inset-0 bg-black/30 backdrop-blur-sm; }
+  .modal-panel { @apply bg-white/80 dark:bg-white/5 backdrop-blur rounded-2xl shadow-elev-3 animate-scale-in; }
+
+  /* Text gradient utility */
+  .text-gradient { @apply bg-gradient-primary bg-clip-text text-transparent; }
+
+  /* Skeleton */
+  .skeleton { background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.12) 37%, rgba(0,0,0,0.06) 63%); background-size: 400% 100%; animation: shimmer 1.4s linear infinite; }
+  .dark .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.06) 63%); }
+}
 

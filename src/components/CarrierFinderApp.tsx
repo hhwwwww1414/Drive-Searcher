@@ -4,6 +4,7 @@ import { processDrivers, buildIndices } from '../lib/indexer'
 import { ExactResult, GeoResult, SearchResults } from '../lib/types'
 import { normalizeCity } from '../lib/normalize'
 import { searchComposite, searchCompositeMulti, searchExact, searchGeo } from '../lib/search'
+import { SearchIcon } from './ui/icons'
 
 type DriverView = ReturnType<typeof processDrivers>[number]
 
@@ -128,10 +129,34 @@ export default function CarrierFinderApp() {
 
   const selectedDriver = selectedDriverId != null ? drivers.find((d) => d.id === selectedDriverId) || null : null
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl p-4">
+        <header className="mb-6">
+          <h1 className="text-gradient">Carrier Finder</h1>
+          <p className="caption mt-1">Интерактивный поиск маршрутов и перевозчиков по данным CSV</p>
+        </header>
+        <div className="space-y-4 animate-fade-in-up">
+          <div className="skeleton h-10 w-60 rounded-xl"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="skeleton h-10 rounded-xl"></div>
+            <div className="skeleton h-10 rounded-xl"></div>
+            <div className="skeleton h-10 rounded-xl"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="skeleton h-24 rounded-2xl"></div>
+            <div className="skeleton h-24 rounded-2xl"></div>
+            <div className="skeleton h-24 rounded-2xl"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-7xl p-4">
-      <header className="mb-4">
-        <h1 className="text-2xl font-bold">Carrier Finder</h1>
+      <header className="mb-6">
+        <h1 className="text-gradient">Carrier Finder</h1>
         <p className="text-sm text-gray-600">Поиск перевозчиков по маршрутам из CSV (без ручных загрузок)</p>
       </header>
 
@@ -200,7 +225,7 @@ export default function CarrierFinderApp() {
                       <div className="text-sm text-gray-700">Путь: {results.composite.path.join(' — ')}</div>
                       <div className="space-y-2">
                         {results.composite.segments.map((s, idx) => (
-                          <div key={idx} className="border rounded p-2 bg-white">
+                          <div key={idx} className="card p-3">
                             <div className="text-sm font-medium">{s.path.join(' — ')}</div>
                             <div className="text-xs text-gray-600">
                               {s.driverId != null ? (
@@ -217,7 +242,7 @@ export default function CarrierFinderApp() {
                           <div className="text-xs text-gray-500 mb-1">Другие варианты (кратчайшие):</div>
                           <div className="space-y-2">
                             {results.compositeAlts.slice(1).map((alt, i) => (
-                              <div key={i} className="border rounded p-2 bg-white">
+                              <div key={i} className="card p-3">
                                 <div className="text-xs text-gray-700">Путь: {alt.path.join(' — ')}</div>
                                 {alt.segments.map((s, j) => (
                                   <div key={j} className="text-xs text-gray-600">
@@ -240,7 +265,7 @@ export default function CarrierFinderApp() {
               )}
             </div>
             <div className="lg:col-span-1">
-              <aside className="bg-white rounded border p-3 sticky top-3">
+              <aside className="card p-4 sticky top-3">
                 <h3 className="font-semibold mb-2">Карточка водителя</h3>
                 {!selectedDriver && <div className="text-sm text-gray-500">Выберите водителя из списка</div>}
                 {selectedDriver && (
@@ -280,11 +305,11 @@ export default function CarrierFinderApp() {
           </div>
 
           <section className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="bg-white rounded border p-3">
+            <div className="card p-4">
               <h3 className="font-semibold mb-2">Водители</h3>
               <ul className="space-y-2 max-h-80 overflow-auto pr-1">
                 {drivers.map((d) => (
-                  <li key={d.id} className="border rounded p-2 flex items-center justify-between">
+                  <li key={d.id} className="card p-2 flex items-center justify-between">
                     <div>
                       <div className="font-medium">{d.name}</div>
                       <div className="text-xs text-gray-600">{d.pairs.length} пар, {d.chains.length} маршрутов; {d.corridors.slice(0,3).join(', ')}</div>
@@ -294,7 +319,7 @@ export default function CarrierFinderApp() {
                 ))}
               </ul>
             </div>
-            <div className="bg-white rounded border p-3 lg:col-span-2">
+            <div className="card p-4 lg:col-span-2">
               <h3 className="font-semibold mb-2">Сделки</h3>
               <div className="text-sm text-gray-500">Заглушка: функционал сделок будет добавлен позже.</div>
             </div>
@@ -308,7 +333,7 @@ export default function CarrierFinderApp() {
 function ResultColumn({ title, children, emptyText }: { title: string; children: React.ReactNode; emptyText: string }) {
   const hasChildren = React.Children.count(children) > 0
   return (
-    <div className="bg-white rounded border p-3">
+    <div className="card p-4">
       <div className="font-semibold mb-2">{title}</div>
       <div className="space-y-2">
         {hasChildren ? children : <div className="text-sm text-gray-500">{emptyText}</div>}
