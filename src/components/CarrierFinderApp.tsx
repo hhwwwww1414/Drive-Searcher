@@ -209,14 +209,20 @@ export default function CarrierFinderApp() {
             <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 min-w-0">
               <ResultColumn title="Точные" emptyText="Нет точных совпадений">
                 {results.exact.map((r) => (
-                  <ResultCard key={`e-${r.driverId}`} title={getDriverName(r.driverId)}
-                              subtitle={r.chain.join(' — ')} onClick={() => setSelectedDriverId(r.driverId)} />
+                  <ResultCard
+                    key={`e-${r.driverId}`}
+                    title={getDriverName(r.driverId)}
+                    onClick={() => setSelectedDriverId(r.driverId)}
+                  />
                 ))}
               </ResultColumn>
               <ResultColumn title="Гео" emptyText="Нет гео-совпадений">
                 {results.geo.map((r) => (
-                  <ResultCard key={`g-${r.driverId}`} title={getDriverName(r.driverId)}
-                              subtitle={r.chain.join(' — ')} onClick={() => setSelectedDriverId(r.driverId)} />
+                  <ResultCard
+                    key={`g-${r.driverId}`}
+                    title={getDriverName(r.driverId)}
+                    onClick={() => setSelectedDriverId(r.driverId)}
+                  />
                 ))}
               </ResultColumn>
               {showComposite && results.composite && (
@@ -231,76 +237,76 @@ export default function CarrierFinderApp() {
                 </div>
               )}
               {showComposite && false && (
-                <ResultColumn title="Составной" emptyText="Путь не найден">
-                  {results.composite && (
-                    <div className="space-y-2">
-                      <div className="text-sm text-gray-700">Путь: {results.composite.path.join(' — ')}</div>
+                  <ResultColumn title="Составной" emptyText="Путь не найден">
+                    {results.composite && (
                       <div className="space-y-2">
-                        {results.composite.segments.map((s, idx) => {
-                          const ids = (s.driverIds && s.driverIds.length ? s.driverIds : (s.driverId != null ? [s.driverId] : [])) as number[]
-                          const idsSorted = [...ids].sort((a,b) => getDriverName(a).localeCompare(getDriverName(b)))
-                          return (
-                            <div key={idx} className="card p-3">
-                              <div className="text-sm font-medium">{s.path.join(' — ')}</div>
-                              <div className="text-xs text-gray-600">
-                                {idsSorted.length ? (
-                                  <span>
-                                    {idsSorted.map((id, i) => (
-                                      <span key={id}>
-                                        {i > 0 && <span>{', '}</span>}
-                                        <button className="underline" onClick={() => setSelectedDriverId(id)}>
-                                          {getDriverName(id)}
-                                        </button>
-                                      </span>
-                                    ))}
-                                  </span>
-                                ) : (
-                                  'Нет подходящего водителя'
-                                )}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {results.compositeAlts && results.compositeAlts.length > 1 && (
-                        <div className="pt-2 border-t mt-2">
-                          <div className="text-xs text-gray-500 mb-1">Другие варианты (кратчайшие):</div>
-                          <div className="space-y-2">
-                            {results.compositeAlts.slice(1).map((alt, i) => (
-                              <div key={i} className="card p-3">
-                                <div className="text-xs text-gray-700">Путь: {alt.path.join(' — ')}</div>
-                                {alt.segments.map((s, j) => {
-                                  const ids = (s.driverIds && s.driverIds.length ? s.driverIds : (s.driverId != null ? [s.driverId] : [])) as number[]
-                                  const idsSorted = [...ids].sort((a,b) => getDriverName(a).localeCompare(getDriverName(b)))
-                                  return (
-                                    <div key={j} className="text-xs text-gray-600">
-                                      <span className="font-medium">{s.path.join(' — ')}</span>{' '}
-                                      {idsSorted.length ? (
-                                        <span>
-                                          {idsSorted.map((id, i) => (
-                                            <span key={id}>
-                                              {i > 0 && <span>{', '}</span>}
-                                              <button className="underline" onClick={() => setSelectedDriverId(id)}>
-                                                {getDriverName(id)}
-                                              </button>
-                                            </span>
-                                          ))}
+                        <div className="text-sm text-gray-700">Путь: {results.composite!.path.join(' — ')}</div>
+                        <div className="space-y-2">
+                          {results.composite!.segments.map((s, idx) => {
+                            const ids = (s.driverIds && s.driverIds.length ? s.driverIds : (s.driverId != null ? [s.driverId] : [])) as number[]
+                            const idsSorted = [...ids].sort((a,b) => getDriverName(a).localeCompare(getDriverName(b)))
+                            return (
+                              <div key={idx} className="card p-3">
+                                <div className="text-sm font-medium">{s.path.join(' — ')}</div>
+                                <div className="text-xs text-gray-600">
+                                  {idsSorted.length ? (
+                                    <span>
+                                      {idsSorted.map((id, i) => (
+                                        <span key={id}>
+                                          {i > 0 && <span>{', '}</span>}
+                                          <button className="underline" onClick={() => setSelectedDriverId(id)}>
+                                            {getDriverName(id)}
+                                          </button>
                                         </span>
-                                      ) : (
-                                        'Нет подходящего водителя'
-                                      )}
-                                    </div>
-                                  )
-                                })}
+                                      ))}
+                                    </span>
+                                  ) : (
+                                    'Нет подходящего водителя'
+                                  )}
+                                </div>
                               </div>
-                            ))}
-                          </div>
+                            )
+                          })}
                         </div>
-                      )}
-                    </div>
-                  )}
-                </ResultColumn>
-              )}
+                        {(results.compositeAlts?.length ?? 0) > 1 && (
+                          <div className="pt-2 border-t mt-2">
+                            <div className="text-xs text-gray-500 mb-1">Другие варианты (кратчайшие):</div>
+                            <div className="space-y-2">
+                              {results.compositeAlts!.slice(1).map((alt, i) => (
+                                <div key={i} className="card p-3">
+                                  <div className="text-xs text-gray-700">Путь: {alt.path.join(' — ')}</div>
+                                  {alt.segments.map((s, j) => {
+                                    const ids = (s.driverIds && s.driverIds.length ? s.driverIds : (s.driverId != null ? [s.driverId] : [])) as number[]
+                                    const idsSorted = [...ids].sort((a,b) => getDriverName(a).localeCompare(getDriverName(b)))
+                                    return (
+                                      <div key={j} className="text-xs text-gray-600">
+                                        <span className="font-medium">{s.path.join(' — ')}</span>{' '}
+                                        {idsSorted.length ? (
+                                          <span>
+                                            {idsSorted.map((id, i) => (
+                                              <span key={id}>
+                                                {i > 0 && <span>{', '}</span>}
+                                                <button className="underline" onClick={() => setSelectedDriverId(id)}>
+                                                  {getDriverName(id)}
+                                                </button>
+                                              </span>
+                                            ))}
+                                          </span>
+                                        ) : (
+                                          'Нет подходящего водителя'
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </ResultColumn>
+                )}
             </div>
             <div className="lg:col-span-1 min-w-0">
               <aside className="card p-4 sticky top-3 self-start">
@@ -380,7 +386,7 @@ function ResultColumn({ title, children, emptyText }: { title: string; children:
   )
 }
 
-function ResultCard({ title, subtitle, onClick }: { title: string; subtitle: string; onClick: () => void }) {
+function ResultCard({ title, subtitle, onClick }: { title: string; subtitle?: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="w-full card p-3 text-left hover:shadow-elev-2 transition border border-neutral-200">
       <div className="font-medium text-neutral-900">{title}</div>
