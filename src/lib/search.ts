@@ -149,7 +149,7 @@ export function searchGeo(indices: Indices, from: string, to: string, driverChai
 }
 
 function planCompositeForPath(indices: Indices, sp: string[], maxDrivers: number): CompositeResult {
-  const { adj, subpathUnd, subpathDir } = indices
+  const { adj, subpathUnd, subpathDir, pairExact } = indices
   if (sp.length <= 1) return { path: sp, segments: [], _meta: { segmentsCount: 0, score: 0 } }
 
   const n = sp.length - 1
@@ -158,8 +158,13 @@ function planCompositeForPath(indices: Indices, sp: string[], maxDrivers: number
   for (let i = 0; i < sp.length; i++) {
     for (let j = i + 1; j < sp.length; j++) {
       const key = unorderedKey(sp[i]!, sp[j]!)
-      const s = subpathUnd.get(key)
-      cover[i][j] = s ? new Set(s) : new Set<number>()
+      // Union coverage: chains (unordered subpaths) + explicit history pairs
+      const s1 = subpathUnd.get(key)
+      const s2 = pairExact.get(key)
+      const set = new Set<number>()
+      if (s1) for (const id of s1) set.add(id)
+      if (s2) for (const id of s2) set.add(id)
+      cover[i][j] = set
     }
   }
 

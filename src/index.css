@@ -66,5 +66,9 @@ small, .caption { @apply text-sm leading-6 text-neutral-600 dark:text-neutral-30
   /* Skeleton */
   .skeleton { background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.12) 37%, rgba(0,0,0,0.06) 63%); background-size: 400% 100%; animation: shimmer 1.4s linear infinite; }
   .dark .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.06) 63%); }
+
+  /* Pretty chips for driver lists inside result cards */
+  .card .text-xs.text-gray-600 { @apply flex flex-wrap gap-2 items-center; }
+  .card .text-xs.text-gray-600 button.underline { @apply no-underline inline-flex items-center rounded-full px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition; }
 }
 

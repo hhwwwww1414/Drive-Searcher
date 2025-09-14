@@ -370,9 +370,9 @@ function ResultColumn({ title, children, emptyText }: { title: string; children:
 
 function ResultCard({ title, subtitle, onClick }: { title: string; subtitle: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="text-left border rounded p-2 bg-white hover:bg-gray-50 w-full">
-      <div className="font-medium">{title}</div>
-      <div className="text-sm text-gray-600 truncate" title={subtitle}>{subtitle}</div>
+    <button onClick={onClick} className="w-full card p-3 text-left hover:shadow-elev-2 transition">
+      <div className="font-medium text-neutral-900">{title}</div>
+      <div className="mt-0.5 text-sm text-neutral-600 truncate" title={subtitle}>{subtitle}</div>
     </button>
   )
 }
