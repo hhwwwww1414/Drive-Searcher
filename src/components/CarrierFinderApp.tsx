@@ -102,6 +102,7 @@ export default function CarrierFinderApp() {
     // Dedup geo by excluding those in exact
     const exactIds = new Set(exact.map((r) => r.driverId))
     const geo: GeoResult[] = searchGeo(indices, A, B, driverChains).filter((g) => !exactIds.has(g.driverId))
+    const excludeIds = new Set<number>([...exact.map((e) => e.driverId), ...geo.map((g) => g.driverId)])
 
     // Sorting by length, then name
     exact.sort((a, b) => a.chain.length - b.chain.length || getDriverName(a.driverId).localeCompare(getDriverName(b.driverId)))
@@ -112,8 +113,8 @@ export default function CarrierFinderApp() {
     let composite: ReturnType<typeof searchComposite> | null = null
     let compositeAlts: ReturnType<typeof searchCompositeMulti> = []
     if (total < 5) {
-      composite = searchComposite(indices, A, B)
-      compositeAlts = searchCompositeMulti(indices, A, B).slice(0, 3)
+      composite = searchComposite(indices, A, B, 6, 5, true, excludeIds)
+      compositeAlts = searchCompositeMulti(indices, A, B, 6, 8, true, excludeIds).slice(0, 3)
 
       // Deduplicate: if composite is one segment fully covered by a driver already in exact/geo with same A..B
       if (composite && composite.segments.length === 1) {

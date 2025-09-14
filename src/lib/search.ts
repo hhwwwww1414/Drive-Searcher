@@ -37,8 +37,13 @@ export function bfsPath(adj: Map<string, Set<string>>, start: string, goal: stri
   return null
 }
 
-// BFS predecessors for all shortest paths
-function bfsPredecessors(adj: Map<string, Set<string>>, start: string, goal: string) {
+// BFS predecessors for all shortest paths; optionally skip a direct edge
+function bfsPredecessors(
+  adj: Map<string, Set<string>>,
+  start: string,
+  goal: string,
+  skipEdge?: [string, string]
+) {
   const q: string[] = [start]
   const dist = new Map<string, number>([[start, 0]])
   const pred = new Map<string, Set<string>>()
@@ -46,6 +51,7 @@ function bfsPredecessors(adj: Map<string, Set<string>>, start: string, goal: str
     const u = q.shift()!
     const du = dist.get(u)!
     for (const v of adj.get(u) || []) {
+      if (skipEdge && ((u === skipEdge[0] && v === skipEdge[1]) || (u === skipEdge[1] && v === skipEdge[0]))) continue
       if (!dist.has(v)) {
         dist.set(v, du + 1)
         pred.set(v, new Set([u]))
@@ -148,7 +154,12 @@ export function searchGeo(indices: Indices, from: string, to: string, driverChai
   return results
 }
 
-function planCompositeForPath(indices: Indices, sp: string[], maxDrivers: number): CompositeResult {
+function planCompositeForPath(
+  indices: Indices,
+  sp: string[],
+  maxDrivers: number,
+  exclude: Set<number> = new Set()
+): CompositeResult {
   const { adj, subpathUnd, subpathDir, pairExact } = indices
   if (sp.length <= 1) return { path: sp, segments: [], _meta: { segmentsCount: 0, score: 0 } }
 
@@ -162,8 +173,8 @@ function planCompositeForPath(indices: Indices, sp: string[], maxDrivers: number
       const s1 = subpathUnd.get(key)
       const s2 = pairExact.get(key)
       const set = new Set<number>()
-      if (s1) for (const id of s1) set.add(id)
-      if (s2) for (const id of s2) set.add(id)
+      if (s1) for (const id of s1) if (!exclude.has(id)) set.add(id)
+      if (s2) for (const id of s2) if (!exclude.has(id)) set.add(id)
       cover[i][j] = set
     }
   }
@@ -236,26 +247,42 @@ function planCompositeForPath(indices: Indices, sp: string[], maxDrivers: number
   return { path: sp, segments, _meta: { segmentsCount: segments.length, score: dp[0]?.score || 0 } }
 }
 
-export function searchComposite(indices: Indices, from: string, to: string, maxDrivers: number = 3, kPaths: number = 5): CompositeResult | null {
+export function searchComposite(
+  indices: Indices,
+  from: string,
+  to: string,
+  maxDrivers: number = 3,
+  kPaths: number = 5,
+  avoidDirect: boolean = false,
+  exclude: Set<number> = new Set()
+): CompositeResult | null {
   const { adj } = indices
-  const res = bfsPredecessors(adj, from, to)
+  const res = bfsPredecessors(adj, from, to, avoidDirect ? [from, to] : undefined)
   if (!res) return null
   const { pred } = res
   const candidatesPaths = enumerateShortestPaths(pred, from, to, kPaths)
   if (candidatesPaths.length === 0) return null
-  const plans = candidatesPaths.map((p) => planCompositeForPath(indices, p, maxDrivers))
+  const plans = candidatesPaths.map((p) => planCompositeForPath(indices, p, maxDrivers, exclude))
   plans.sort((a, b) => (a._meta!.segmentsCount - b._meta!.segmentsCount) || (b._meta!.score - a._meta!.score))
   return plans[0] || null
 }
 
-export function searchCompositeMulti(indices: Indices, from: string, to: string, maxDrivers: number = 3, kPaths: number = 8): CompositeResult[] {
+export function searchCompositeMulti(
+  indices: Indices,
+  from: string,
+  to: string,
+  maxDrivers: number = 3,
+  kPaths: number = 8,
+  avoidDirect: boolean = false,
+  exclude: Set<number> = new Set()
+): CompositeResult[] {
   const { adj } = indices
-  const res = bfsPredecessors(adj, from, to)
+  const res = bfsPredecessors(adj, from, to, avoidDirect ? [from, to] : undefined)
   if (!res) return []
   const { pred } = res
   const candidatesPaths = enumerateShortestPaths(pred, from, to, kPaths)
   if (!candidatesPaths.length) return []
-  const out = candidatesPaths.map((p) => planCompositeForPath(indices, p, maxDrivers))
+  const out = candidatesPaths.map((p) => planCompositeForPath(indices, p, maxDrivers, exclude))
   out.sort((a, b) => (a._meta!.segmentsCount - b._meta!.segmentsCount) || (b._meta!.score - a._meta!.score))
   return out
 }
