@@ -107,26 +107,28 @@ export default function CarrierFinderApp() {
     exact.sort((a, b) => a.chain.length - b.chain.length || getDriverName(a.driverId).localeCompare(getDriverName(b.driverId)))
     geo.sort((a, b) => a.chain.length - b.chain.length || getDriverName(a.driverId).localeCompare(getDriverName(b.driverId)))
 
-    // Composite plan
-    let composite = searchComposite(indices, A, B)
-    let compositeAlts = [] as ReturnType<typeof searchCompositeMulti>
-    if (exact.length === 0) {
-      compositeAlts = searchCompositeMulti(indices, A, B).slice(0, 3)
-    }
+    const total = exact.length + geo.length
 
-    // Deduplicate: if composite is one segment fully covered by a driver already in exact/geo with same A..B
-    if (composite && composite.segments.length === 1) {
-      const seg = composite.segments[0]
-      const did = seg.driverId
-      const dupInExact = did != null && exact.some((e) => e.driverId === did && e.chain[0] === A && e.chain[e.chain.length - 1] === B)
-      const dupInGeo = did != null && geo.some((g) => g.driverId === did && g.chain[0] === A && g.chain[g.chain.length - 1] === B)
-      if (dupInExact || dupInGeo) composite = null
+    let composite: ReturnType<typeof searchComposite> | null = null
+    let compositeAlts: ReturnType<typeof searchCompositeMulti> = []
+    if (total < 5) {
+      composite = searchComposite(indices, A, B)
+      compositeAlts = searchCompositeMulti(indices, A, B).slice(0, 3)
+
+      // Deduplicate: if composite is one segment fully covered by a driver already in exact/geo with same A..B
+      if (composite && composite.segments.length === 1) {
+        const seg = composite.segments[0]
+        const did = seg.driverId
+        const dupInExact = did != null && exact.some((e) => e.driverId === did && e.chain[0] === A && e.chain[e.chain.length - 1] === B)
+        const dupInGeo = did != null && geo.some((g) => g.driverId === did && g.chain[0] === A && g.chain[g.chain.length - 1] === B)
+        if (dupInExact || dupInGeo) composite = null
+      }
     }
 
     setResults({ exact, geo, composite, compositeAlts })
   }
 
-  const showComposite = !!results.composite && (results.exact.length === 0 || (results.composite?.segments.length ?? 0) > 1)
+  const showComposite = !!results.composite
 
   const selectedDriver = selectedDriverId != null ? drivers.find((d) => d.id === selectedDriverId) || null : null
 
