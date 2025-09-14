@@ -144,7 +144,7 @@ export default function CarrierFinderApp() {
             <div className="skeleton h-10 rounded-xl"></div>
             <div className="skeleton h-10 rounded-xl"></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="skeleton h-24 rounded-2xl"></div>
             <div className="skeleton h-24 rounded-2xl"></div>
             <div className="skeleton h-24 rounded-2xl"></div>
@@ -206,7 +206,7 @@ export default function CarrierFinderApp() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-w-0">
-            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 min-w-0">
+            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
               <ResultColumn title="Точные" emptyText="Нет точных совпадений">
                 {results.exact.map((r) => (
                   <ResultCard
@@ -226,7 +226,7 @@ export default function CarrierFinderApp() {
                 ))}
               </ResultColumn>
               {showComposite && results.composite && (
-                <div className="md:col-span-2 xl:col-span-3 min-w-0">
+                <div className="md:col-span-2 min-w-0">
                   <CompositePanel
                   variants={(results.compositeAlts && results.compositeAlts.length
                     ? [results.composite!, ...results.compositeAlts.filter(v => v.path.join('>') !== results.composite!.path.join('>'))]
