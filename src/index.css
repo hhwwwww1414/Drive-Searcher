@@ -84,11 +84,5 @@ small, .caption { @apply text-sm leading-6 text-neutral-600 dark:text-neutral-30
   /* Ensure ring is not visually clipped when Tailwind overflow-hidden is on card */
   .card.overflow-hidden { overflow: visible !important; }
 
-  /* Global override: prefer wide single-line over ellipsis for this interface */
-  .truncate {
-    white-space: nowrap !important;
-    text-overflow: clip !important;
-    overflow: visible !important;
-  }
 }
 
