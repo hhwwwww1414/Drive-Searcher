@@ -84,7 +84,7 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
             const route = v.path.join(' — ')
             return (
               <li key={route}
-                  className={`card p-3 flex items-start sm:items-center gap-3 min-h-[84px] min-w-0 overflow-hidden ${isActive ? 'ring-2 ring-primary-500' : ''}`}
+                  className={`card p-3 flex items-start sm:items-center gap-3 min-h-[84px] min-w-0 overflow-hidden ${isActive ? 'border-2 border-primary-500' : ''}`}
                   onMouseEnter={() => highlightPath(v.path, { temporary: true })}
                   onMouseLeave={() => clearHighlight()}>
                 <div className="flex-1 min-w-0">
