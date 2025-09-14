@@ -1,6 +1,6 @@
 import React from 'react'
 import { CompositeResult } from '../lib/types'
-import { clearHighlight, fitToPath, highlightPath, highlightSegment } from '../lib/map'
+import { clearHighlight, highlightPath, highlightSegment } from '../lib/map'
 
 type Props = {
   variants: CompositeResult[]
@@ -95,9 +95,6 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
                   <button className="btn btn-ghost px-2 py-1 text-xs whitespace-nowrap" onClick={() => { onPickVariant(idx); }}>
                     Открыть
                   </button>
-                  <button className="btn btn-ghost px-2 py-1 text-xs whitespace-nowrap" onClick={() => { highlightPath(v.path); fitToPath(v.path) }}>
-                    Показать на карте
-                  </button>
                 </div>
               </li>
             )
@@ -177,7 +174,6 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <button className="text-blue-600 underline" onClick={() => onSelectDriver(chosen)}>Открыть карточку</button>
-                      <button className="text-blue-600 underline" onClick={() => { highlightSegment(s.path); fitToPath(s.path) }}>Показать на карте</button>
                     </div>
                   </div>
                 ) : idsSorted.length === 0 ? (
