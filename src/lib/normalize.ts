@@ -17,8 +17,11 @@ export function normalizeDashSeparators(s: string): string {
   let t = s
   // unify nbsp
   t = t.replace(/\u00A0/g, ' ')
-  // replace various dashes between tokens with spaced em dash
-  t = t.replace(/\s*[\-–—‑]\s*/g, ` ${emDash} `)
+  // IMPORTANT: do not break hyphenated city names like "Горно-Алтайск".
+  // 1) Normalize en/em dashes used as separators (with or without spaces)
+  t = t.replace(/\s*[–—]\s*/g, ` ${emDash} `)
+  // 2) Normalize only spaced hyphen as a separator ("A - B" -> "A — B")
+  t = t.replace(/\s-\s/g, ` ${emDash} `)
   // collapse spaces
   t = t.replace(/\s+/g, ' ').trim()
   return t

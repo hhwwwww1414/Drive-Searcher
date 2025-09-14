@@ -56,7 +56,9 @@ export async function loadLinePathsNode(root = '.'): Promise<string[][]> {
     if (!s) continue
     const parts = s
       .replace(/\u00A0/g, ' ')
-      .replace(/\s*[\-–—‑]\s*/g, ' — ')
+      // Do not split hyphenated city names; only treat en/em dashes or spaced hyphens as separators.
+      .replace(/\s*[–—]\s*/g, ' — ')
+      .replace(/\s-\s/g, ' — ')
       .split(' — ')
       .map((x) => x.trim())
       .filter(Boolean)

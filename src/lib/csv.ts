@@ -67,7 +67,10 @@ export async function loadLinePaths(): Promise<string[][]> {
     // split by em-dash like in drivers
     const parts = s
       .replace(/\u00A0/g, ' ')
-      .replace(/\s*[\-–—‑]\s*/g, ' — ')
+      // Keep hyphenated city names intact (e.g., "Горно-Алтайск").
+      // Convert only en/em dashes, or spaced hyphens, into a spaced em dash separator.
+      .replace(/\s*[–—]\s*/g, ' — ')
+      .replace(/\s-\s/g, ' — ')
       .split(' — ')
       .map((x) => x.trim())
       .filter(Boolean)
