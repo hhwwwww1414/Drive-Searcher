@@ -68,7 +68,8 @@ async function main() {
     if (!path) continue
     const exact = searchExact(indices, A, B, driverChains).map((r) => ({ id: r.driverId, name: driverName.get(r.driverId), chain: r.chain }))
     const geo = searchGeo(indices, A, B, driverChains).map((r) => ({ id: r.driverId, name: driverName.get(r.driverId), chain: r.chain }))
-    const composite = searchComposite(indices, A, B)
+    const total = exact.length + geo.length
+    const composite = total < 5 ? searchComposite(indices, A, B) : null
 
     // Edge-level coverage diagnostic on BFS path using subpathUnd
     const edges = [] as { from: string; to: string; drivers: { id: number; name: string }[] }[]
