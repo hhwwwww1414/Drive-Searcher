@@ -51,6 +51,8 @@ small, .caption { @apply text-sm leading-6 text-neutral-600 dark:text-neutral-30
 
   /* Cards */
   .card { @apply rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur shadow-elev-1 border border-white/40 dark:border-white/10; }
+  li.card { width: 100%; }
+  .card .text-lg.font-semibold { white-space: nowrap; overflow-x: auto; }
   .glass { @apply bg-glass backdrop-blur; }
 
   /* Badges */
@@ -70,5 +72,23 @@ small, .caption { @apply text-sm leading-6 text-neutral-600 dark:text-neutral-30
   /* Pretty chips for driver lists inside result cards */
   .card .text-xs.text-gray-600 { @apply flex flex-wrap gap-2 items-center; }
   .card .text-xs.text-gray-600 button.underline { @apply no-underline inline-flex items-center rounded-full px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition; }
+
+  /* Chips (global) */
+  .chip { @apply inline-flex items-center max-w-full truncate rounded-full border border-neutral-300 bg-neutral-100/70 text-neutral-800 px-3 py-1 text-[12px] leading-6 h-7 hover:bg-neutral-100 transition; }
+  .chip-active { @apply bg-neutral-900 text-white border-neutral-900; }
+
+  /* Details marker reset for cross-browser consistency */
+  details > summary { list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+
+  /* Ensure ring is not visually clipped when Tailwind overflow-hidden is on card */
+  .card.overflow-hidden { overflow: visible !important; }
+
+  /* Global override: prefer wide single-line over ellipsis for this interface */
+  .truncate {
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+  }
 }
 

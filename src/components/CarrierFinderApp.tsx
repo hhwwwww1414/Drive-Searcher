@@ -5,6 +5,7 @@ import { ExactResult, GeoResult, SearchResults } from '../lib/types'
 import { normalizeCity } from '../lib/normalize'
 import { searchComposite, searchCompositeMulti, searchExact, searchGeo } from '../lib/search'
 import { SearchIcon } from './ui/icons'
+import CompositePanel from './CompositePanel'
 
 type DriverView = ReturnType<typeof processDrivers>[number]
 
@@ -131,7 +132,7 @@ export default function CarrierFinderApp() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl p-4">
+      <div className="w-full max-w-none mx-0 px-0">
         <header className="mb-6">
           <h1 className="text-gradient">Carrier Finder</h1>
           <p className="caption mt-1">Интерактивный поиск маршрутов и перевозчиков по данным CSV</p>
@@ -154,7 +155,7 @@ export default function CarrierFinderApp() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl p-4">
+    <div className="w-full max-w-none mx-0 px-0">
       <header className="mb-6">
         <h1 className="text-gradient">Carrier Finder</h1>
         <p className="text-sm text-gray-600">Поиск перевозчиков по маршрутам из CSV (без ручных загрузок)</p>
@@ -204,8 +205,8 @@ export default function CarrierFinderApp() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-w-0">
+            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 min-w-0">
               <ResultColumn title="Точные" emptyText="Нет точных совпадений">
                 {results.exact.map((r) => (
                   <ResultCard key={`e-${r.driverId}`} title={getDriverName(r.driverId)}
@@ -218,7 +219,18 @@ export default function CarrierFinderApp() {
                               subtitle={r.chain.join(' — ')} onClick={() => setSelectedDriverId(r.driverId)} />
                 ))}
               </ResultColumn>
-              {showComposite && (
+              {showComposite && results.composite && (
+                <div className="md:col-span-2 xl:col-span-3 min-w-0">
+                  <CompositePanel
+                  variants={(results.compositeAlts && results.compositeAlts.length
+                    ? [results.composite!, ...results.compositeAlts.filter(v => v.path.join('>') !== results.composite!.path.join('>'))]
+                    : [results.composite!])}
+                  getDriverName={getDriverName}
+                  onSelectDriver={(id) => setSelectedDriverId(id)}
+                  />
+                </div>
+              )}
+              {showComposite && false && (
                 <ResultColumn title="Составной" emptyText="Путь не найден">
                   {results.composite && (
                     <div className="space-y-2">
@@ -290,8 +302,8 @@ export default function CarrierFinderApp() {
                 </ResultColumn>
               )}
             </div>
-            <div className="lg:col-span-1">
-              <aside className="card p-4 sticky top-3">
+            <div className="lg:col-span-1 min-w-0">
+              <aside className="card p-4 sticky top-3 self-start">
                 <h3 className="font-semibold mb-2">Карточка водителя</h3>
                 {!selectedDriver && <div className="text-sm text-gray-500">Выберите водителя из списка</div>}
                 {selectedDriver && (
@@ -370,9 +382,11 @@ function ResultColumn({ title, children, emptyText }: { title: string; children:
 
 function ResultCard({ title, subtitle, onClick }: { title: string; subtitle: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="w-full card p-3 text-left hover:shadow-elev-2 transition">
+    <button onClick={onClick} className="w-full card p-3 text-left hover:shadow-elev-2 transition border border-neutral-200">
       <div className="font-medium text-neutral-900">{title}</div>
-      <div className="mt-0.5 text-sm text-neutral-600 truncate" title={subtitle}>{subtitle}</div>
+      {subtitle ? (
+        <div className="mt-0.5 text-sm text-neutral-600 truncate" title={subtitle}>{subtitle}</div>
+      ) : null}
     </button>
   )
 }
