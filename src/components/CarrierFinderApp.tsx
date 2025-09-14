@@ -224,18 +224,31 @@ export default function CarrierFinderApp() {
                     <div className="space-y-2">
                       <div className="text-sm text-gray-700">Путь: {results.composite.path.join(' — ')}</div>
                       <div className="space-y-2">
-                        {results.composite.segments.map((s, idx) => (
-                          <div key={idx} className="card p-3">
-                            <div className="text-sm font-medium">{s.path.join(' — ')}</div>
-                            <div className="text-xs text-gray-600">
-                              {s.driverId != null ? (
-                                <button className="underline" onClick={() => setSelectedDriverId(s.driverId)}>
-                                  {getDriverName(s.driverId)}
-                                </button>
-                              ) : 'Нет подходящего водителя'}
+                        {results.composite.segments.map((s, idx) => {
+                          const ids = (s.driverIds && s.driverIds.length ? s.driverIds : (s.driverId != null ? [s.driverId] : [])) as number[]
+                          const idsSorted = [...ids].sort((a,b) => getDriverName(a).localeCompare(getDriverName(b)))
+                          return (
+                            <div key={idx} className="card p-3">
+                              <div className="text-sm font-medium">{s.path.join(' — ')}</div>
+                              <div className="text-xs text-gray-600">
+                                {idsSorted.length ? (
+                                  <span>
+                                    {idsSorted.map((id, i) => (
+                                      <span key={id}>
+                                        {i > 0 && <span>{', '}</span>}
+                                        <button className="underline" onClick={() => setSelectedDriverId(id)}>
+                                          {getDriverName(id)}
+                                        </button>
+                                      </span>
+                                    ))}
+                                  </span>
+                                ) : (
+                                  'Нет подходящего водителя'
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                       {results.compositeAlts && results.compositeAlts.length > 1 && (
                         <div className="pt-2 border-t mt-2">
@@ -244,16 +257,29 @@ export default function CarrierFinderApp() {
                             {results.compositeAlts.slice(1).map((alt, i) => (
                               <div key={i} className="card p-3">
                                 <div className="text-xs text-gray-700">Путь: {alt.path.join(' — ')}</div>
-                                {alt.segments.map((s, j) => (
-                                  <div key={j} className="text-xs text-gray-600">
-                                    <span className="font-medium">{s.path.join(' — ')}</span>{' '}
-                                    {s.driverId != null ? (
-                                      <button className="underline" onClick={() => setSelectedDriverId(s.driverId)}>
-                                        {getDriverName(s.driverId)}
-                                      </button>
-                                    ) : 'Нет подходящего водителя'}
-                                  </div>
-                                ))}
+                                {alt.segments.map((s, j) => {
+                                  const ids = (s.driverIds && s.driverIds.length ? s.driverIds : (s.driverId != null ? [s.driverId] : [])) as number[]
+                                  const idsSorted = [...ids].sort((a,b) => getDriverName(a).localeCompare(getDriverName(b)))
+                                  return (
+                                    <div key={j} className="text-xs text-gray-600">
+                                      <span className="font-medium">{s.path.join(' — ')}</span>{' '}
+                                      {idsSorted.length ? (
+                                        <span>
+                                          {idsSorted.map((id, i) => (
+                                            <span key={id}>
+                                              {i > 0 && <span>{', '}</span>}
+                                              <button className="underline" onClick={() => setSelectedDriverId(id)}>
+                                                {getDriverName(id)}
+                                              </button>
+                                            </span>
+                                          ))}
+                                        </span>
+                                      ) : (
+                                        'Нет подходящего водителя'
+                                      )}
+                                    </div>
+                                  )
+                                })}
                               </div>
                             ))}
                           </div>

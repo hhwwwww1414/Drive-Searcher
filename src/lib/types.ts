@@ -38,7 +38,10 @@ export type CompositeSegment = {
   from: string
   to: string
   path: string[]
+  // Primary picked driver for the segment (kept for compatibility)
   driverId: number | null
+  // All drivers that can cover the entire segment from->to
+  driverIds?: number[]
 }
 
 export type CompositeResult = {

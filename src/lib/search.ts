@@ -214,14 +214,18 @@ function planCompositeForPath(indices: Indices, sp: string[], maxDrivers: number
   }
 
   const plan = dp[0]
-  if (!plan) return { path: sp, segments: [{ from: sp[0], to: sp[sp.length - 1], path: [...sp], driverId: null }], _meta: { segmentsCount: 1, score: 0 } }
+  if (!plan) {
+    const allDrivers = Array.from((cover[0]?.[sp.length - 1] || new Set<number>()).values())
+    return { path: sp, segments: [{ from: sp[0], to: sp[sp.length - 1], path: [...sp], driverId: null, driverIds: allDrivers }], _meta: { segmentsCount: 1, score: 0 } }
+  }
   const segments: CompositeSegment[] = []
   let idx = 0
   while (idx < sp.length - 1) {
     const st = dp[idx]
     if (!st || st.nextIndex == null) break
     const j = st.nextIndex
-    segments.push({ from: sp[idx]!, to: sp[j]!, path: sp.slice(idx, j + 1), driverId: st.driverId })
+    const allDrivers = Array.from((cover[idx]?.[j] || new Set<number>()).values())
+    segments.push({ from: sp[idx]!, to: sp[j]!, path: sp.slice(idx, j + 1), driverId: st.driverId, driverIds: allDrivers })
     idx = j
   }
   return { path: sp, segments, _meta: { segmentsCount: segments.length, score: dp[0]?.score || 0 } }
