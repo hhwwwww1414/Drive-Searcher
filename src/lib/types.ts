@@ -73,12 +73,10 @@ export interface CityRating {
 
 export interface RouteRating {
   route: string
-  rating: number
   deals: number
-  trips: number
-  drivers: number
   bidsSum: number
   avgBid: number
+  drivers: number
 }
 
 export interface DriverRating {
