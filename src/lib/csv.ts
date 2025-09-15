@@ -113,13 +113,17 @@ export async function loadCityRatings(): Promise<CityRating[]> {
 export async function loadRouteRatings(): Promise<RouteRating[]> {
   const rows = stripBomRows(await fetchCsv('/data/route_ratings.csv'))
   return rows.map((r) => ({
-    route: r['Маршрут (A — B)'] || '',
-    rating: Number(r['Рейтинг'] || '0'),
-    deals: Number(r['Сделок'] || '0'),
-    trips: Number(r['Поездок (строк)'] || '0'),
-    drivers: Number(r['Водителей (уникальных)'] || '0'),
-    bidsSum: Number(r['Сумма ставок'] || '0'),
+    route: r['Маршрут'] || r['Маршрут (A — B)'] || '',
+    deals: Number(
+      r['Количество сделок по маршруту'] || r['Сделок'] || '0'
+    ),
+    bidsSum: Number(
+      r['Сумма ставок по маршруту'] || r['Сумма ставок'] || '0'
+    ),
     avgBid: Number(r['Средняя ставка'] || '0'),
+    drivers: Number(
+      r['Количество уникальных водителей'] || r['Водителей (уникальных)'] || '0'
+    ),
   }))
 }
 

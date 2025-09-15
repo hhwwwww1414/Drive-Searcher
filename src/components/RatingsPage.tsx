@@ -232,24 +232,20 @@ function renderRouteTable(rows: RouteRating[]) {
         <thead>
           <tr>
             <th className="px-2 py-1 text-left">Маршрут</th>
-            <th className="px-2 py-1 text-left">Рейтинг</th>
             <th className="px-2 py-1 text-left">Сделок</th>
-            <th className="px-2 py-1 text-left">Поездок</th>
-            <th className="px-2 py-1 text-left">Водителей</th>
             <th className="px-2 py-1 text-left">Сумма ставок</th>
             <th className="px-2 py-1 text-left">Средняя ставка</th>
+            <th className="px-2 py-1 text-left">Водителей</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={i} className="odd:bg-gray-50">
               <td className="px-2 py-1 whitespace-nowrap">{r.route}</td>
-              <td className="px-2 py-1">{r.rating}</td>
               <td className="px-2 py-1">{r.deals}</td>
-              <td className="px-2 py-1">{r.trips}</td>
-              <td className="px-2 py-1">{r.drivers}</td>
               <td className="px-2 py-1">{r.bidsSum}</td>
               <td className="px-2 py-1">{r.avgBid}</td>
+              <td className="px-2 py-1">{r.drivers}</td>
             </tr>
           ))}
         </tbody>
