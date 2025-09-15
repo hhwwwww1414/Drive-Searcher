@@ -4,6 +4,14 @@ import { processDrivers, buildIndices } from '../lib/indexer'
 import { ExactResult, GeoResult, SearchResults } from '../lib/types'
 import { normalizeCity, splitChain } from '../lib/normalize'
 import { searchComposite, searchCompositeMulti, searchExact, searchGeo } from '../lib/search'
+import {
+  DriverCostAggregate,
+  aggregateDeals,
+  getDriverCostsForRoute,
+  getDriverRouteAverage,
+  makeRouteKey,
+} from '../lib/deals'
+import { formatCurrency } from '../lib/format'
 import { SearchIcon } from './ui/icons'
 import CompositePanel from './CompositePanel'
 
@@ -19,6 +27,11 @@ export default function CarrierFinderApp() {
   const [toCity, setToCity] = useState('')
   const [results, setResults] = useState<SearchResults>({ exact: [], geo: [], composite: null })
   const [selectedDriverId, setSelectedDriverId] = useState<number | null>(null)
+  const [routeCostMap, setRouteCostMap] = useState<Map<string, number>>(new Map())
+  const [driverCostMap, setDriverCostMap] = useState<DriverCostAggregate>(new Map())
+  const [estimatedCost, setEstimatedCost] = useState<number | null>(null)
+  const [driverCosts, setDriverCosts] = useState<Map<number, number>>(new Map())
+  const [lastRoute, setLastRoute] = useState<{ from: string; to: string } | null>(null)
 
   // Line chains from line_paths.csv
   const lineChainsRef = React.useRef<string[][]>([])
@@ -45,6 +58,15 @@ export default function CarrierFinderApp() {
         if (cancelled) return
         lineChainsRef.current = lineChains
         const processed = processDrivers(driverRows)
+        const routeCosts = new Map<string, number>()
+        for (const rating of routeRatings) {
+          const parts = splitChain(rating.route)
+          if (parts.length >= 2) {
+            const key = makeRouteKey(parts[0], parts[parts.length - 1])
+            if (key) routeCosts.set(key, rating.avgBid)
+          }
+        }
+        const dealAggregate = aggregateDeals(deals, processed)
         const normalizedCities = Array.from(
           new Set(
             cityNames
@@ -88,6 +110,21 @@ export default function CarrierFinderApp() {
     [routeAvgMap],
   )
 
+  const getDriverCostValue = React.useCallback(
+    (id: number, from: string, to: string): number | null => {
+      const key = makeRouteKey(from, to)
+      if (!key) return null
+      const avg = getDriverRouteAverage(driverCostMap, id, key)
+      return avg ?? null
+    },
+    [driverCostMap]
+  )
+
+  function getDriverSubtitle(driverId: number): string | undefined {
+    const cost = driverCosts.get(driverId)
+    return cost != null ? `Средняя цена: ${formatCurrency(cost)}` : undefined
+  }
+
   function onSearch() {
     const A = normalizeCity(fromCity)
     const B = normalizeCity(toCity)
@@ -101,9 +138,26 @@ export default function CarrierFinderApp() {
     if (unknown.length) {
       setResults({ exact: [], geo: [], composite: null })
       setError(`Город не найден: ${unknown.join(', ')}`)
+      setEstimatedCost(null)
+      setDriverCosts(new Map())
+      setLastRoute(null)
       return
     }
     setError(null)
+
+    const routeKey = makeRouteKey(A, B)
+    if (!routeKey) {
+      setResults({ exact: [], geo: [], composite: null })
+      setEstimatedCost(null)
+      setDriverCosts(new Map())
+      setLastRoute(null)
+      return
+    }
+
+    setLastRoute({ from: A, to: B })
+    const estimated = routeCostMap.get(routeKey)
+    setEstimatedCost(estimated ?? null)
+    setDriverCosts(getDriverCostsForRoute(driverCostMap, routeKey))
 
     // A == B special: drivers that include the city in any chain
     if (A === B) {
@@ -226,6 +280,23 @@ export default function CarrierFinderApp() {
             </div>
           )}
 
+          {lastRoute && (
+            <div className="card p-4 bg-white/80 border border-neutral-200">
+              <div className="text-sm text-neutral-600">
+                Примерная стоимость:{' '}
+                <span className="font-semibold text-neutral-900">{formatCurrency(estimatedCost)}</span>
+              </div>
+              <div className="text-xs text-neutral-500 mt-1">
+                Маршрут: {lastRoute.from} — {lastRoute.to}
+              </div>
+              <div className="text-xs text-neutral-500 mt-1">
+                {driverCosts.size
+                  ? `Данные по перевозчикам: ${driverCosts.size}`
+                  : 'Нет данных по перевозчикам для этого маршрута'}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-w-0">
             <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
               <ResultColumn title="Точные" emptyText="Нет точных совпадений">
@@ -233,6 +304,7 @@ export default function CarrierFinderApp() {
                   <ResultCard
                     key={`e-${r.driverId}`}
                     title={getDriverName(r.driverId)}
+                    subtitle={getDriverSubtitle(r.driverId)}
                     onClick={() => setSelectedDriverId(r.driverId)}
                   />
                 ))}
@@ -242,6 +314,7 @@ export default function CarrierFinderApp() {
                   <ResultCard
                     key={`g-${r.driverId}`}
                     title={getDriverName(r.driverId)}
+                    subtitle={getDriverSubtitle(r.driverId)}
                     onClick={() => setSelectedDriverId(r.driverId)}
                   />
                 ))}

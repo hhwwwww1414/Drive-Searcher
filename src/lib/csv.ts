@@ -1,5 +1,6 @@
 import Papa from 'papaparse'
-import { CityRating, RouteRating, DriverRating } from './types'
+import { CityRating, RouteRating, DriverRating, Deal } from './types'
+import { normalizeCity } from './normalize'
 
 export async function fetchCsv(path: string): Promise<Record<string, string>[]> {
   const res = await fetch(path)
@@ -146,4 +147,30 @@ export async function loadDriverRatings(): Promise<DriverRating[]> {
       r['Доступные маршруты'] || r['Routes'] || r['Уникальных маршрутов'] || '0'
     ),
   }))
+}
+
+export async function loadDealsCsv(): Promise<Deal[]> {
+  const rows = stripBomRows(await fetchCsv('/data/deals.csv'))
+  const deals: Deal[] = []
+  for (const r of rows) {
+    const phone = (r['Phone'] || r['Телефон'] || r['Carrier phone'] || '').trim()
+    const driverIdRaw = r['DriverId'] || r['Driver ID'] || r['carrier_id'] || ''
+    const driverIdValue = driverIdRaw ? Number(driverIdRaw) : undefined
+    const driverId = Number.isFinite(driverIdValue ?? NaN) ? driverIdValue : undefined
+    const from = normalizeCity(r['From'] || r['Откуда'] || r['From city'] || '')
+    const to = normalizeCity(r['To'] || r['Куда'] || r['To city'] || '')
+    const costRaw = r['Cost'] || r['Цена'] || r['Стоимость'] || ''
+    const cost = Number(costRaw)
+    if (!from || !to) continue
+    if (!Number.isFinite(cost)) continue
+    if (!phone && driverId == null) continue
+    deals.push({
+      phone,
+      driverId,
+      from,
+      to,
+      cost,
+    })
+  }
+  return deals
 }
