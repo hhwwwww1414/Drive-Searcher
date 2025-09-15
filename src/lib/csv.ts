@@ -114,7 +114,6 @@ export async function loadRouteRatings(): Promise<RouteRating[]> {
   const rows = stripBomRows(await fetchCsv('/data/route_ratings.csv'))
   return rows.map((r) => ({
     route: r['Маршрут'] || r['Маршрут (A — B)'] || '',
-    rating: Number(r['Rating'] || r['Рейтинг'] || '0'),
     trips: Number(
       r['Trips'] ||
         r['Рейсов'] ||
@@ -122,6 +121,10 @@ export async function loadRouteRatings(): Promise<RouteRating[]> {
         r['Сделок'] ||
         '0'
     ),
+    bidsSum: Number(
+      r['Bids sum'] || r['Сумма ставок по маршруту'] || r['Сумма ставок'] || '0'
+    ),
+    avgBid: Number(r['Average bid'] || r['Средняя ставка'] || '0'),
     drivers: Number(
       r['Drivers'] ||
         r['Водителей'] ||
@@ -129,10 +132,6 @@ export async function loadRouteRatings(): Promise<RouteRating[]> {
         r['Водителей (уникальных)'] ||
         '0'
     ),
-    bidsSum: Number(
-      r['Bids sum'] || r['Сумма ставок по маршруту'] || r['Сумма ставок'] || '0'
-    ),
-    avgBid: Number(r['Average bid'] || r['Средняя ставка'] || '0'),
   }))
 }
 
@@ -141,17 +140,10 @@ export async function loadDriverRatings(): Promise<DriverRating[]> {
   return rows.map((r) => ({
     name: r['ФИО'] || r['Name'] || '',
     phone: r['ТЕЛЕФОН'] || r['Phone'] || '',
-    segments: Number(r['Segments'] || r['Сегментов'] || '0'),
     deals: Number(r['Количество сделок'] || r['Deals'] || '0'),
     bidsSum: Number(r['Общая сумма'] || r['Bids sum'] || '0'),
-    avgBid: Number(r['Средняя ставка'] || r['Average bid'] || '0'),
     uniqueRoutes: Number(
-      r['Доступные маршруты'] ||
-        r['Routes'] ||
-        r['Уникальных маршрутов'] ||
-        '0'
+      r['Доступные маршруты'] || r['Routes'] || r['Уникальных маршрутов'] || '0'
     ),
-    uniqueCities: Number(r['Уникальных городов'] || r['Unique cities'] || '0'),
-    topRoute: r['Топ маршрут'] || r['Top route'] || '',
   }))
 }
