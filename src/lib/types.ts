@@ -59,16 +59,16 @@ export type SearchResults = {
 }
 
 export interface CityRating {
+  city: string
+  rating: number
   dealsStarted: number
   dealsFinished: number
-  city: string
-  sumStart: number
-  sumFinish: number
-  totalBid: number
-  routesThroughCity: number
+  bidsStart: number
+  bidsFinish: number
+  bidsTotal: number
+  routes: number
   fleetDensity: number
-  averageBid: number
-  rating: number
+  avgBid: number
 }
 
 export interface RouteRating {

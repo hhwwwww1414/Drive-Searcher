@@ -91,16 +91,22 @@ export async function loadLinePaths(): Promise<string[][]> {
 export async function loadCityRatings(): Promise<CityRating[]> {
   const rows = stripBomRows(await fetchCsv('/data/city_ratings.csv'))
   return rows.map((r) => ({
-    dealsStarted: Number(r['Сделок началось'] || '0'),
-    dealsFinished: Number(r['Сделок завершилось'] || '0'),
-    city: r['Город'] || '',
-    sumStart: Number(r['Сумма ставок (старт)'] || '0'),
-    sumFinish: Number(r['Сумма ставок (финиш)'] || '0'),
-    totalBid: Number(r['Общий объём (ставка)'] || '0'),
-    routesThroughCity: Number(r['Маршрутов через город'] || '0'),
-    fleetDensity: Number(r['Плотность водительского парка'] || '0'),
-    averageBid: Number(r['Средняя ставка (по сделкам города)'] || '0'),
-    rating: Number(r['Рейтинг'] || '0'),
+    city: r['City'] || r['Город'] || '',
+    rating: Number(r['Rating'] || r['Рейтинг'] || '0'),
+    dealsStarted: Number(r['Deals started'] || r['Сделок началось'] || '0'),
+    dealsFinished: Number(r['Deals finished'] || r['Сделок завершилось'] || '0'),
+    bidsStart: Number(r['Bids sum (start)'] || r['Сумма ставок (старт)'] || '0'),
+    bidsFinish: Number(r['Bids sum (finish)'] || r['Сумма ставок (финиш)'] || '0'),
+    bidsTotal: Number(r['Total bid volume'] || r['Общий объём (ставка)'] || '0'),
+    routes: Number(r['Routes through city'] || r['Маршрутов через город'] || '0'),
+    fleetDensity: Number(r['Fleet density'] || r['Плотность водительского парка'] || '0'),
+    avgBid:
+      Number(
+        r['Average bid (city deals)'] ||
+          r['Average bid'] ||
+          r['Средняя ставка (по сделкам города)'] ||
+          '0'
+      ),
   }))
 }
 
