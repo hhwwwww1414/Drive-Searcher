@@ -31,11 +31,10 @@ const routeColumns: Column<RouteRating>[] = [
     label: 'Маршрут',
     render: (r) => <span className="whitespace-nowrap">{r.route}</span>,
   },
-  { key: 'rating', label: 'Рейтинг' },
-  { key: 'trips', label: 'Поездок' },
-  { key: 'drivers', label: 'Водителей' },
+  { key: 'trips', label: 'Сделок' },
   { key: 'bidsSum', label: 'Сумма ставок' },
   { key: 'avgBid', label: 'Средняя ставка' },
+  { key: 'drivers', label: 'Уник. водителей' },
 ]
 
 const carrierColumns: Column<DriverRating>[] = [
@@ -49,18 +48,50 @@ const carrierColumns: Column<DriverRating>[] = [
     label: 'Телефон',
     render: (r) => <span className="whitespace-nowrap">{r.phone}</span>,
   },
-  { key: 'segments', label: 'Сегментов' },
   { key: 'deals', label: 'Сделок' },
   { key: 'bidsSum', label: 'Общая сумма' },
-  { key: 'avgBid', label: 'Средняя ставка' },
-  { key: 'uniqueRoutes', label: 'Уник. маршруты' },
-  { key: 'uniqueCities', label: 'Уник. города' },
-  {
-    key: 'topRoute',
-    label: 'Топ маршрут',
-    render: (r) => <span className="whitespace-nowrap">{r.topRoute}</span>,
-  },
+  { key: 'uniqueRoutes', label: 'Доступные маршруты' },
 ]
+
+type Dir = 'min' | 'max'
+
+interface NumberFilterProps {
+  value: string
+  onValueChange: (v: string) => void
+  dir: Dir
+  onDirChange: (d: Dir) => void
+  placeholder: string
+  className?: string
+}
+
+function NumberFilter({
+  value,
+  onValueChange,
+  dir,
+  onDirChange,
+  placeholder,
+  className = '',
+}: NumberFilterProps) {
+  return (
+    <div className="flex">
+      <select
+        value={dir}
+        onChange={(e) => onDirChange(e.target.value as Dir)}
+        className="border px-1 py-1 rounded-l"
+      >
+        <option value="min">≥</option>
+        <option value="max">≤</option>
+      </select>
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+        placeholder={placeholder}
+        className={`border px-2 py-1 rounded-r ${className}`}
+      />
+    </div>
+  )
+}
 
 export default function RatingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('cities')
@@ -72,58 +103,86 @@ export default function RatingsPage() {
   // city filters
   const [cityName, setCityName] = useState('')
   const [cityRatingMin, setCityRatingMin] = useState('')
+  const [cityRatingDir, setCityRatingDir] = useState<Dir>('min')
   const [cityDealsStartedMin, setCityDealsStartedMin] = useState('')
+  const [cityDealsStartedDir, setCityDealsStartedDir] = useState<Dir>('min')
   const [cityDealsFinishedMin, setCityDealsFinishedMin] = useState('')
+  const [cityDealsFinishedDir, setCityDealsFinishedDir] = useState<Dir>('min')
   const [cityBidsStartMin, setCityBidsStartMin] = useState('')
+  const [cityBidsStartDir, setCityBidsStartDir] = useState<Dir>('min')
   const [cityBidsFinishMin, setCityBidsFinishMin] = useState('')
+  const [cityBidsFinishDir, setCityBidsFinishDir] = useState<Dir>('min')
   const [cityBidsTotalMin, setCityBidsTotalMin] = useState('')
+  const [cityBidsTotalDir, setCityBidsTotalDir] = useState<Dir>('min')
   const [cityRoutesMin, setCityRoutesMin] = useState('')
+  const [cityRoutesDir, setCityRoutesDir] = useState<Dir>('min')
   const [cityFleetDensityMin, setCityFleetDensityMin] = useState('')
+  const [cityFleetDensityDir, setCityFleetDensityDir] = useState<Dir>('min')
   const [cityAvgBidMin, setCityAvgBidMin] = useState('')
+  const [cityAvgBidDir, setCityAvgBidDir] = useState<Dir>('min')
   // route filters
   const [routeFrom, setRouteFrom] = useState('')
   const [routeTo, setRouteTo] = useState('')
-  const [routeRatingMin, setRouteRatingMin] = useState('')
   const [routeTripsMin, setRouteTripsMin] = useState('')
+  const [routeTripsDir, setRouteTripsDir] = useState<Dir>('min')
   const [routeDriversMin, setRouteDriversMin] = useState('')
+  const [routeDriversDir, setRouteDriversDir] = useState<Dir>('min')
   const [routeBidsSumMin, setRouteBidsSumMin] = useState('')
+  const [routeBidsSumDir, setRouteBidsSumDir] = useState<Dir>('min')
   const [routeAvgBidMin, setRouteAvgBidMin] = useState('')
+  const [routeAvgBidDir, setRouteAvgBidDir] = useState<Dir>('min')
   // carrier filters
   const [carrierQuery, setCarrierQuery] = useState('')
-  const [carrierSegmentsMin, setCarrierSegmentsMin] = useState('')
   const [carrierDealsMin, setCarrierDealsMin] = useState('')
+  const [carrierDealsDir, setCarrierDealsDir] = useState<Dir>('min')
   const [carrierBidsSumMin, setCarrierBidsSumMin] = useState('')
-  const [carrierAvgBidMin, setCarrierAvgBidMin] = useState('')
+  const [carrierBidsSumDir, setCarrierBidsSumDir] = useState<Dir>('min')
   const [carrierUniqueRoutesMin, setCarrierUniqueRoutesMin] = useState('')
-  const [carrierUniqueCitiesMin, setCarrierUniqueCitiesMin] = useState('')
-  const [carrierTopRoute, setCarrierTopRoute] = useState('')
+  const [carrierUniqueRoutesDir, setCarrierUniqueRoutesDir] = useState<Dir>('min')
+
+  function cmp(val: number, filter: string, dir: Dir) {
+    if (!filter) return true
+    const num = Number(filter)
+    return dir === 'min' ? val >= num : val <= num
+  }
 
   function clearFilters() {
     setCityName('')
     setCityRatingMin('')
+    setCityRatingDir('min')
     setCityDealsStartedMin('')
+    setCityDealsStartedDir('min')
     setCityDealsFinishedMin('')
+    setCityDealsFinishedDir('min')
     setCityBidsStartMin('')
+    setCityBidsStartDir('min')
     setCityBidsFinishMin('')
+    setCityBidsFinishDir('min')
     setCityBidsTotalMin('')
+    setCityBidsTotalDir('min')
     setCityRoutesMin('')
+    setCityRoutesDir('min')
     setCityFleetDensityMin('')
+    setCityFleetDensityDir('min')
     setCityAvgBidMin('')
+    setCityAvgBidDir('min')
     setRouteFrom('')
     setRouteTo('')
-    setRouteRatingMin('')
     setRouteTripsMin('')
+    setRouteTripsDir('min')
     setRouteDriversMin('')
+    setRouteDriversDir('min')
     setRouteBidsSumMin('')
+    setRouteBidsSumDir('min')
     setRouteAvgBidMin('')
+    setRouteAvgBidDir('min')
     setCarrierQuery('')
-    setCarrierSegmentsMin('')
     setCarrierDealsMin('')
+    setCarrierDealsDir('min')
     setCarrierBidsSumMin('')
-    setCarrierAvgBidMin('')
+    setCarrierBidsSumDir('min')
     setCarrierUniqueRoutesMin('')
-    setCarrierUniqueCitiesMin('')
-    setCarrierTopRoute('')
+    setCarrierUniqueRoutesDir('min')
   }
 
   useEffect(() => {
@@ -158,35 +217,18 @@ export default function RatingsPage() {
 
   function renderTable() {
     if (activeTab === 'cities') {
-      const minRating = cityRatingMin ? Number(cityRatingMin) : -Infinity
-      const minDealsStarted = cityDealsStartedMin
-        ? Number(cityDealsStartedMin)
-        : -Infinity
-      const minDealsFinished = cityDealsFinishedMin
-        ? Number(cityDealsFinishedMin)
-        : -Infinity
-      const minBidsStart = cityBidsStartMin ? Number(cityBidsStartMin) : -Infinity
-      const minBidsFinish = cityBidsFinishMin
-        ? Number(cityBidsFinishMin)
-        : -Infinity
-      const minBidsTotal = cityBidsTotalMin ? Number(cityBidsTotalMin) : -Infinity
-      const minRoutes = cityRoutesMin ? Number(cityRoutesMin) : -Infinity
-      const minFleetDensity = cityFleetDensityMin
-        ? Number(cityFleetDensityMin)
-        : -Infinity
-      const minAvgBid = cityAvgBidMin ? Number(cityAvgBidMin) : -Infinity
       const filtered = cities.filter(
         (c) =>
           c.city.toLowerCase().includes(cityName.toLowerCase()) &&
-          c.rating >= minRating &&
-          c.dealsStarted >= minDealsStarted &&
-          c.dealsFinished >= minDealsFinished &&
-          c.bidsStart >= minBidsStart &&
-          c.bidsFinish >= minBidsFinish &&
-          c.bidsTotal >= minBidsTotal &&
-          c.routes >= minRoutes &&
-          c.fleetDensity >= minFleetDensity &&
-          c.avgBid >= minAvgBid
+          cmp(c.rating, cityRatingMin, cityRatingDir) &&
+          cmp(c.dealsStarted, cityDealsStartedMin, cityDealsStartedDir) &&
+          cmp(c.dealsFinished, cityDealsFinishedMin, cityDealsFinishedDir) &&
+          cmp(c.bidsStart, cityBidsStartMin, cityBidsStartDir) &&
+          cmp(c.bidsFinish, cityBidsFinishMin, cityBidsFinishDir) &&
+          cmp(c.bidsTotal, cityBidsTotalMin, cityBidsTotalDir) &&
+          cmp(c.routes, cityRoutesMin, cityRoutesDir) &&
+          cmp(c.fleetDensity, cityFleetDensityMin, cityFleetDensityDir) &&
+          cmp(c.avgBid, cityAvgBidMin, cityAvgBidDir)
       )
       return (
         <>
@@ -197,68 +239,77 @@ export default function RatingsPage() {
               placeholder="Название города"
               className="border px-2 py-1 rounded"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityRatingMin}
-              onChange={(e) => setCityRatingMin(e.target.value)}
-              placeholder="Мин. рейтинг"
-              className="border px-2 py-1 rounded w-32"
+              onValueChange={setCityRatingMin}
+              dir={cityRatingDir}
+              onDirChange={setCityRatingDir}
+              placeholder="Рейтинг"
+              className="w-32"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityDealsStartedMin}
-              onChange={(e) => setCityDealsStartedMin(e.target.value)}
-              placeholder="Сделок началось ≥"
-              className="border px-2 py-1 rounded w-32"
+              onValueChange={setCityDealsStartedMin}
+              dir={cityDealsStartedDir}
+              onDirChange={setCityDealsStartedDir}
+              placeholder="Сделок началось"
+              className="w-32"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityDealsFinishedMin}
-              onChange={(e) => setCityDealsFinishedMin(e.target.value)}
-              placeholder="Сделок завершилось ≥"
-              className="border px-2 py-1 rounded w-32"
+              onValueChange={setCityDealsFinishedMin}
+              dir={cityDealsFinishedDir}
+              onDirChange={setCityDealsFinishedDir}
+              placeholder="Сделок завершилось"
+              className="w-32"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityBidsStartMin}
-              onChange={(e) => setCityBidsStartMin(e.target.value)}
-              placeholder="Сумма ставок (старт) ≥"
-              className="border px-2 py-1 rounded w-40"
+              onValueChange={setCityBidsStartMin}
+              dir={cityBidsStartDir}
+              onDirChange={setCityBidsStartDir}
+              placeholder="Сумма ставок (старт)"
+              className="w-40"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityBidsFinishMin}
-              onChange={(e) => setCityBidsFinishMin(e.target.value)}
-              placeholder="Сумма ставок (финиш) ≥"
-              className="border px-2 py-1 rounded w-40"
+              onValueChange={setCityBidsFinishMin}
+              dir={cityBidsFinishDir}
+              onDirChange={setCityBidsFinishDir}
+              placeholder="Сумма ставок (финиш)"
+              className="w-40"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityBidsTotalMin}
-              onChange={(e) => setCityBidsTotalMin(e.target.value)}
-              placeholder="Сумма ставок (итого) ≥"
-              className="border px-2 py-1 rounded w-40"
+              onValueChange={setCityBidsTotalMin}
+              dir={cityBidsTotalDir}
+              onDirChange={setCityBidsTotalDir}
+              placeholder="Сумма ставок (итого)"
+              className="w-40"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityRoutesMin}
-              onChange={(e) => setCityRoutesMin(e.target.value)}
-              placeholder="Маршрутов ≥"
-              className="border px-2 py-1 rounded w-32"
+              onValueChange={setCityRoutesMin}
+              dir={cityRoutesDir}
+              onDirChange={setCityRoutesDir}
+              placeholder="Маршрутов"
+              className="w-32"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityFleetDensityMin}
-              onChange={(e) => setCityFleetDensityMin(e.target.value)}
-              placeholder="Плотность парка ≥"
-              className="border px-2 py-1 rounded w-32"
+              onValueChange={setCityFleetDensityMin}
+              dir={cityFleetDensityDir}
+              onDirChange={setCityFleetDensityDir}
+              placeholder="Плотность парка"
+              className="w-32"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={cityAvgBidMin}
-              onChange={(e) => setCityAvgBidMin(e.target.value)}
-              placeholder="Средняя ставка ≥"
-              className="border px-2 py-1 rounded w-32"
+              onValueChange={setCityAvgBidMin}
+              dir={cityAvgBidDir}
+              onDirChange={setCityAvgBidDir}
+              placeholder="Средняя ставка"
+              className="w-32"
             />
             <button onClick={clearFilters} className="border px-2 py-1 rounded">
               Сбросить
@@ -269,21 +320,15 @@ export default function RatingsPage() {
       )
     }
     if (activeTab === 'routes') {
-      const minRating = routeRatingMin ? Number(routeRatingMin) : -Infinity
-      const minTrips = routeTripsMin ? Number(routeTripsMin) : -Infinity
-      const minDrivers = routeDriversMin ? Number(routeDriversMin) : -Infinity
-      const minBidsSum = routeBidsSumMin ? Number(routeBidsSumMin) : -Infinity
-      const minAvgBid = routeAvgBidMin ? Number(routeAvgBidMin) : -Infinity
       const filtered = routes.filter((r) => {
         const [from, to] = r.route.split(' — ').map((s) => s.trim().toLowerCase())
         return (
           from.includes(routeFrom.toLowerCase()) &&
           to.includes(routeTo.toLowerCase()) &&
-          r.rating >= minRating &&
-          r.trips >= minTrips &&
-          r.drivers >= minDrivers &&
-          r.bidsSum >= minBidsSum &&
-          r.avgBid >= minAvgBid
+          cmp(r.trips, routeTripsMin, routeTripsDir) &&
+          cmp(r.drivers, routeDriversMin, routeDriversDir) &&
+          cmp(r.bidsSum, routeBidsSumMin, routeBidsSumDir) &&
+          cmp(r.avgBid, routeAvgBidMin, routeAvgBidDir)
         )
       })
       return (
@@ -301,40 +346,37 @@ export default function RatingsPage() {
               placeholder="Город назначения"
               className="border px-2 py-1 rounded"
             />
-            <input
-              type="number"
-              value={routeRatingMin}
-              onChange={(e) => setRouteRatingMin(e.target.value)}
-              placeholder="Мин. рейтинг"
-              className="border px-2 py-1 rounded w-32"
-            />
-            <input
-              type="number"
+            <NumberFilter
               value={routeTripsMin}
-              onChange={(e) => setRouteTripsMin(e.target.value)}
-              placeholder="Поездок ≥"
-              className="border px-2 py-1 rounded w-32"
+              onValueChange={setRouteTripsMin}
+              dir={routeTripsDir}
+              onDirChange={setRouteTripsDir}
+              placeholder="Сделок"
+              className="w-32"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={routeDriversMin}
-              onChange={(e) => setRouteDriversMin(e.target.value)}
-              placeholder="Водителей ≥"
-              className="border px-2 py-1 rounded w-32"
+              onValueChange={setRouteDriversMin}
+              dir={routeDriversDir}
+              onDirChange={setRouteDriversDir}
+              placeholder="Водителей"
+              className="w-32"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={routeBidsSumMin}
-              onChange={(e) => setRouteBidsSumMin(e.target.value)}
-              placeholder="Сумма ставок ≥"
-              className="border px-2 py-1 rounded w-36"
+              onValueChange={setRouteBidsSumMin}
+              dir={routeBidsSumDir}
+              onDirChange={setRouteBidsSumDir}
+              placeholder="Сумма ставок"
+              className="w-36"
             />
-            <input
-              type="number"
+            <NumberFilter
               value={routeAvgBidMin}
-              onChange={(e) => setRouteAvgBidMin(e.target.value)}
-              placeholder="Средняя ставка ≥"
-              className="border px-2 py-1 rounded w-36"
+              onValueChange={setRouteAvgBidMin}
+              dir={routeAvgBidDir}
+              onDirChange={setRouteAvgBidDir}
+              placeholder="Средняя ставка"
+              className="w-36"
             />
             <button onClick={clearFilters} className="border px-2 py-1 rounded">
               Сбросить
@@ -344,31 +386,13 @@ export default function RatingsPage() {
         </>
       )
     }
-    const minSegments = carrierSegmentsMin
-      ? Number(carrierSegmentsMin)
-      : -Infinity
-    const minDeals = carrierDealsMin ? Number(carrierDealsMin) : -Infinity
-    const minBidsSum = carrierBidsSumMin
-      ? Number(carrierBidsSumMin)
-      : -Infinity
-    const minAvgBid = carrierAvgBidMin ? Number(carrierAvgBidMin) : -Infinity
-    const minUniqueRoutes = carrierUniqueRoutesMin
-      ? Number(carrierUniqueRoutesMin)
-      : -Infinity
-    const minUniqueCities = carrierUniqueCitiesMin
-      ? Number(carrierUniqueCitiesMin)
-      : -Infinity
     const filtered = carriers.filter(
       (c) =>
         (c.name.toLowerCase().includes(carrierQuery.toLowerCase()) ||
           c.phone.includes(carrierQuery)) &&
-        c.segments >= minSegments &&
-        c.deals >= minDeals &&
-        c.bidsSum >= minBidsSum &&
-        c.avgBid >= minAvgBid &&
-        c.uniqueRoutes >= minUniqueRoutes &&
-        c.uniqueCities >= minUniqueCities &&
-        c.topRoute.toLowerCase().includes(carrierTopRoute.toLowerCase())
+        cmp(c.deals, carrierDealsMin, carrierDealsDir) &&
+        cmp(c.bidsSum, carrierBidsSumMin, carrierBidsSumDir) &&
+        cmp(c.uniqueRoutes, carrierUniqueRoutesMin, carrierUniqueRoutesDir)
     )
     return (
       <>
@@ -379,53 +403,29 @@ export default function RatingsPage() {
             placeholder="Имя или телефон"
             className="border px-2 py-1 rounded"
           />
-          <input
-            type="number"
-            value={carrierSegmentsMin}
-            onChange={(e) => setCarrierSegmentsMin(e.target.value)}
-            placeholder="Сегментов ≥"
-            className="border px-2 py-1 rounded w-32"
-          />
-          <input
-            type="number"
+          <NumberFilter
             value={carrierDealsMin}
-            onChange={(e) => setCarrierDealsMin(e.target.value)}
-            placeholder="Сделок ≥"
-            className="border px-2 py-1 rounded w-32"
+            onValueChange={setCarrierDealsMin}
+            dir={carrierDealsDir}
+            onDirChange={setCarrierDealsDir}
+            placeholder="Сделок"
+            className="w-32"
           />
-          <input
-            type="number"
+          <NumberFilter
             value={carrierBidsSumMin}
-            onChange={(e) => setCarrierBidsSumMin(e.target.value)}
-            placeholder="Сумма ставок ≥"
-            className="border px-2 py-1 rounded w-36"
+            onValueChange={setCarrierBidsSumMin}
+            dir={carrierBidsSumDir}
+            onDirChange={setCarrierBidsSumDir}
+            placeholder="Сумма ставок"
+            className="w-36"
           />
-          <input
-            type="number"
-            value={carrierAvgBidMin}
-            onChange={(e) => setCarrierAvgBidMin(e.target.value)}
-            placeholder="Средняя ставка ≥"
-            className="border px-2 py-1 rounded w-36"
-          />
-          <input
-            type="number"
+          <NumberFilter
             value={carrierUniqueRoutesMin}
-            onChange={(e) => setCarrierUniqueRoutesMin(e.target.value)}
-            placeholder="Уникальных маршрутов ≥"
-            className="border px-2 py-1 rounded w-48"
-          />
-          <input
-            type="number"
-            value={carrierUniqueCitiesMin}
-            onChange={(e) => setCarrierUniqueCitiesMin(e.target.value)}
-            placeholder="Уникальных городов ≥"
-            className="border px-2 py-1 rounded w-48"
-          />
-          <input
-            value={carrierTopRoute}
-            onChange={(e) => setCarrierTopRoute(e.target.value)}
-            placeholder="Топ маршрут"
-            className="border px-2 py-1 rounded"
+            onValueChange={setCarrierUniqueRoutesMin}
+            dir={carrierUniqueRoutesDir}
+            onDirChange={setCarrierUniqueRoutesDir}
+            placeholder="Маршрутов"
+            className="w-48"
           />
           <button onClick={clearFilters} className="border px-2 py-1 rounded">
             Сбросить
