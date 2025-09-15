@@ -83,7 +83,11 @@ export interface RouteRating {
 export interface DriverRating {
   name: string
   phone: string
+  segments: number
   deals: number
   bidsSum: number
-  routes: number
+  avgBid: number
+  uniqueRoutes: number
+  uniqueCities: number
+  topRoute: string
 }

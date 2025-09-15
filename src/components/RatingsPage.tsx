@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { loadCityRatings, loadRouteRatings, loadDriverRatings } from '../lib/csv'
 import type { CityRating, RouteRating, DriverRating } from '../lib/types'
+import RatingsTable, { Column } from './RatingsTable'
 
 // Tabs identifiers
 const tabs = [
@@ -10,6 +11,56 @@ const tabs = [
 ] as const
 
 type TabKey = typeof tabs[number]['key']
+
+const cityColumns: Column<CityRating>[] = [
+  { key: 'city', label: 'Город' },
+  { key: 'rating', label: 'Рейтинг' },
+  { key: 'dealsStarted', label: 'Сделок началось' },
+  { key: 'dealsFinished', label: 'Сделок завершилось' },
+  { key: 'bidsStart', label: 'Сумма ставок (старт)' },
+  { key: 'bidsFinish', label: 'Сумма ставок (финиш)' },
+  { key: 'bidsTotal', label: 'Сумма ставок (итого)' },
+  { key: 'routes', label: 'Маршрутов через город' },
+  { key: 'fleetDensity', label: 'Плотность парка' },
+  { key: 'avgBid', label: 'Средняя ставка' },
+]
+
+const routeColumns: Column<RouteRating>[] = [
+  {
+    key: 'route',
+    label: 'Маршрут',
+    render: (r) => <span className="whitespace-nowrap">{r.route}</span>,
+  },
+  { key: 'rating', label: 'Рейтинг' },
+  { key: 'trips', label: 'Поездок' },
+  { key: 'drivers', label: 'Водителей' },
+  { key: 'bidsSum', label: 'Сумма ставок' },
+  { key: 'avgBid', label: 'Средняя ставка' },
+]
+
+const carrierColumns: Column<DriverRating>[] = [
+  {
+    key: 'name',
+    label: 'ФИО',
+    render: (r) => <span className="whitespace-nowrap">{r.name}</span>,
+  },
+  {
+    key: 'phone',
+    label: 'Телефон',
+    render: (r) => <span className="whitespace-nowrap">{r.phone}</span>,
+  },
+  { key: 'segments', label: 'Сегментов' },
+  { key: 'deals', label: 'Сделок' },
+  { key: 'bidsSum', label: 'Общая сумма' },
+  { key: 'avgBid', label: 'Средняя ставка' },
+  { key: 'uniqueRoutes', label: 'Уник. маршруты' },
+  { key: 'uniqueCities', label: 'Уник. города' },
+  {
+    key: 'topRoute',
+    label: 'Топ маршрут',
+    render: (r) => <span className="whitespace-nowrap">{r.topRoute}</span>,
+  },
+]
 
 export default function RatingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('cities')
@@ -39,6 +90,13 @@ export default function RatingsPage() {
   const [routeAvgBidMin, setRouteAvgBidMin] = useState('')
   // carrier filters
   const [carrierQuery, setCarrierQuery] = useState('')
+  const [carrierSegmentsMin, setCarrierSegmentsMin] = useState('')
+  const [carrierDealsMin, setCarrierDealsMin] = useState('')
+  const [carrierBidsSumMin, setCarrierBidsSumMin] = useState('')
+  const [carrierAvgBidMin, setCarrierAvgBidMin] = useState('')
+  const [carrierUniqueRoutesMin, setCarrierUniqueRoutesMin] = useState('')
+  const [carrierUniqueCitiesMin, setCarrierUniqueCitiesMin] = useState('')
+  const [carrierTopRoute, setCarrierTopRoute] = useState('')
 
   function clearFilters() {
     setCityName('')
@@ -59,6 +117,13 @@ export default function RatingsPage() {
     setRouteBidsSumMin('')
     setRouteAvgBidMin('')
     setCarrierQuery('')
+    setCarrierSegmentsMin('')
+    setCarrierDealsMin('')
+    setCarrierBidsSumMin('')
+    setCarrierAvgBidMin('')
+    setCarrierUniqueRoutesMin('')
+    setCarrierUniqueCitiesMin('')
+    setCarrierTopRoute('')
   }
 
   useEffect(() => {
@@ -199,7 +264,7 @@ export default function RatingsPage() {
               Сбросить
             </button>
           </div>
-          {renderCityTable(filtered)}
+          <RatingsTable data={filtered} columns={cityColumns} />
         </>
       )
     }
@@ -275,14 +340,35 @@ export default function RatingsPage() {
               Сбросить
             </button>
           </div>
-          {renderRouteTable(filtered)}
+          <RatingsTable data={filtered} columns={routeColumns} />
         </>
       )
     }
+    const minSegments = carrierSegmentsMin
+      ? Number(carrierSegmentsMin)
+      : -Infinity
+    const minDeals = carrierDealsMin ? Number(carrierDealsMin) : -Infinity
+    const minBidsSum = carrierBidsSumMin
+      ? Number(carrierBidsSumMin)
+      : -Infinity
+    const minAvgBid = carrierAvgBidMin ? Number(carrierAvgBidMin) : -Infinity
+    const minUniqueRoutes = carrierUniqueRoutesMin
+      ? Number(carrierUniqueRoutesMin)
+      : -Infinity
+    const minUniqueCities = carrierUniqueCitiesMin
+      ? Number(carrierUniqueCitiesMin)
+      : -Infinity
     const filtered = carriers.filter(
       (c) =>
-        c.name.toLowerCase().includes(carrierQuery.toLowerCase()) ||
-        c.phone.includes(carrierQuery)
+        (c.name.toLowerCase().includes(carrierQuery.toLowerCase()) ||
+          c.phone.includes(carrierQuery)) &&
+        c.segments >= minSegments &&
+        c.deals >= minDeals &&
+        c.bidsSum >= minBidsSum &&
+        c.avgBid >= minAvgBid &&
+        c.uniqueRoutes >= minUniqueRoutes &&
+        c.uniqueCities >= minUniqueCities &&
+        c.topRoute.toLowerCase().includes(carrierTopRoute.toLowerCase())
     )
     return (
       <>
@@ -293,11 +379,59 @@ export default function RatingsPage() {
             placeholder="Имя или телефон"
             className="border px-2 py-1 rounded"
           />
+          <input
+            type="number"
+            value={carrierSegmentsMin}
+            onChange={(e) => setCarrierSegmentsMin(e.target.value)}
+            placeholder="Сегментов ≥"
+            className="border px-2 py-1 rounded w-32"
+          />
+          <input
+            type="number"
+            value={carrierDealsMin}
+            onChange={(e) => setCarrierDealsMin(e.target.value)}
+            placeholder="Сделок ≥"
+            className="border px-2 py-1 rounded w-32"
+          />
+          <input
+            type="number"
+            value={carrierBidsSumMin}
+            onChange={(e) => setCarrierBidsSumMin(e.target.value)}
+            placeholder="Сумма ставок ≥"
+            className="border px-2 py-1 rounded w-36"
+          />
+          <input
+            type="number"
+            value={carrierAvgBidMin}
+            onChange={(e) => setCarrierAvgBidMin(e.target.value)}
+            placeholder="Средняя ставка ≥"
+            className="border px-2 py-1 rounded w-36"
+          />
+          <input
+            type="number"
+            value={carrierUniqueRoutesMin}
+            onChange={(e) => setCarrierUniqueRoutesMin(e.target.value)}
+            placeholder="Уникальных маршрутов ≥"
+            className="border px-2 py-1 rounded w-48"
+          />
+          <input
+            type="number"
+            value={carrierUniqueCitiesMin}
+            onChange={(e) => setCarrierUniqueCitiesMin(e.target.value)}
+            placeholder="Уникальных городов ≥"
+            className="border px-2 py-1 rounded w-48"
+          />
+          <input
+            value={carrierTopRoute}
+            onChange={(e) => setCarrierTopRoute(e.target.value)}
+            placeholder="Топ маршрут"
+            className="border px-2 py-1 rounded"
+          />
           <button onClick={clearFilters} className="border px-2 py-1 rounded">
             Сбросить
           </button>
         </div>
-        {renderCarrierTable(filtered)}
+        <RatingsTable data={filtered} columns={carrierColumns} />
       </>
     )
   }
@@ -322,106 +456,3 @@ export default function RatingsPage() {
     </div>
   )
 }
-
-function renderCityTable(rows: CityRating[]) {
-  if (!rows.length) return <div className="text-sm text-gray-500">Нет данных</div>
-  return (
-    <div className="overflow-auto">
-      <table className="min-w-full text-sm">
-        <thead>
-          <tr>
-            <th className="px-2 py-1 text-left">Город</th>
-            <th className="px-2 py-1 text-left">Рейтинг</th>
-            <th className="px-2 py-1 text-left">Сделок началось</th>
-            <th className="px-2 py-1 text-left">Сделок завершилось</th>
-            <th className="px-2 py-1 text-left">Сумма ставок (старт)</th>
-            <th className="px-2 py-1 text-left">Сумма ставок (финиш)</th>
-            <th className="px-2 py-1 text-left">Сумма ставок (итого)</th>
-            <th className="px-2 py-1 text-left">Маршрутов через город</th>
-            <th className="px-2 py-1 text-left">Плотность парка</th>
-            <th className="px-2 py-1 text-left">Средняя ставка</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="odd:bg-gray-50">
-              <td className="px-2 py-1">{r.city}</td>
-              <td className="px-2 py-1">{r.rating}</td>
-              <td className="px-2 py-1">{r.dealsStarted}</td>
-              <td className="px-2 py-1">{r.dealsFinished}</td>
-              <td className="px-2 py-1">{r.bidsStart}</td>
-              <td className="px-2 py-1">{r.bidsFinish}</td>
-              <td className="px-2 py-1">{r.bidsTotal}</td>
-              <td className="px-2 py-1">{r.routes}</td>
-              <td className="px-2 py-1">{r.fleetDensity}</td>
-              <td className="px-2 py-1">{r.avgBid}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function renderRouteTable(rows: RouteRating[]) {
-  if (!rows.length) return <div className="text-sm text-gray-500">Нет данных</div>
-  return (
-    <div className="overflow-auto">
-      <table className="min-w-full text-sm">
-        <thead>
-          <tr>
-            <th className="px-2 py-1 text-left">Маршрут</th>
-            <th className="px-2 py-1 text-left">Рейтинг</th>
-            <th className="px-2 py-1 text-left">Поездок</th>
-            <th className="px-2 py-1 text-left">Водителей</th>
-            <th className="px-2 py-1 text-left">Сумма ставок</th>
-            <th className="px-2 py-1 text-left">Средняя ставка</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="odd:bg-gray-50">
-              <td className="px-2 py-1 whitespace-nowrap">{r.route}</td>
-              <td className="px-2 py-1">{r.rating}</td>
-              <td className="px-2 py-1">{r.trips}</td>
-              <td className="px-2 py-1">{r.drivers}</td>
-              <td className="px-2 py-1">{r.bidsSum}</td>
-              <td className="px-2 py-1">{r.avgBid}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function renderCarrierTable(rows: DriverRating[]) {
-  if (!rows.length) return <div className="text-sm text-gray-500">Нет данных</div>
-  return (
-    <div className="overflow-auto">
-      <table className="min-w-full text-sm">
-        <thead>
-          <tr>
-            <th className="px-2 py-1 text-left">ФИО</th>
-            <th className="px-2 py-1 text-left">Телефон</th>
-            <th className="px-2 py-1 text-left">Количество сделок</th>
-            <th className="px-2 py-1 text-left">Общая сумма</th>
-            <th className="px-2 py-1 text-left">Доступные маршруты</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="odd:bg-gray-50">
-              <td className="px-2 py-1 whitespace-nowrap">{r.name}</td>
-              <td className="px-2 py-1 whitespace-nowrap">{r.phone}</td>
-              <td className="px-2 py-1">{r.deals}</td>
-              <td className="px-2 py-1">{r.bidsSum}</td>
-              <td className="px-2 py-1">{r.routes}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
