@@ -197,7 +197,7 @@ function renderCityTable(rows: CityRating[]) {
             <th className="px-2 py-1 text-left">Сделок завершилось</th>
             <th className="px-2 py-1 text-left">Сумма ставок (старт)</th>
             <th className="px-2 py-1 text-left">Сумма ставок (финиш)</th>
-            <th className="px-2 py-1 text-left">Общий объём (ставка)</th>
+            <th className="px-2 py-1 text-left">Сумма ставок (итого)</th>
             <th className="px-2 py-1 text-left">Маршрутов через город</th>
             <th className="px-2 py-1 text-left">Плотность парка</th>
             <th className="px-2 py-1 text-left">Средняя ставка</th>
@@ -210,12 +210,12 @@ function renderCityTable(rows: CityRating[]) {
               <td className="px-2 py-1">{r.rating}</td>
               <td className="px-2 py-1">{r.dealsStarted}</td>
               <td className="px-2 py-1">{r.dealsFinished}</td>
-              <td className="px-2 py-1">{r.sumStart}</td>
-              <td className="px-2 py-1">{r.sumFinish}</td>
-              <td className="px-2 py-1">{r.totalBid}</td>
-              <td className="px-2 py-1">{r.routesThroughCity}</td>
+              <td className="px-2 py-1">{r.bidsStart}</td>
+              <td className="px-2 py-1">{r.bidsFinish}</td>
+              <td className="px-2 py-1">{r.bidsTotal}</td>
+              <td className="px-2 py-1">{r.routes}</td>
               <td className="px-2 py-1">{r.fleetDensity}</td>
-              <td className="px-2 py-1">{r.averageBid}</td>
+              <td className="px-2 py-1">{r.avgBid}</td>
             </tr>
           ))}
         </tbody>
