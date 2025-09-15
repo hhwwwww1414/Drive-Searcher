@@ -86,13 +86,3 @@ export interface DriverRating {
   bidsSum: number
   uniqueRoutes: number
 }
-
-export type RouteKey = string
-
-export interface Deal {
-  phone: string
-  driverId?: number | null
-  from: string
-  to: string
-  cost: number
-}

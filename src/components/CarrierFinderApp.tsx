@@ -1,11 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import {
-  loadCitiesCsv,
-  loadDealsCsv,
-  loadDriversCsv,
-  loadLinePaths,
-  loadRouteRatings,
-} from '../lib/csv'
+import { loadCitiesCsv, loadDriversCsv, loadLinePaths, loadRouteRatings } from '../lib/csv'
 import { processDrivers, buildIndices } from '../lib/indexer'
 import { ExactResult, GeoResult, SearchResults } from '../lib/types'
 import { normalizeCity, splitChain } from '../lib/normalize'
@@ -28,6 +22,7 @@ export default function CarrierFinderApp() {
   const [error, setError] = useState<string | null>(null)
   const [cities, setCities] = useState<string[]>([])
   const [drivers, setDrivers] = useState<DriverView[]>([])
+  const [routeAvgMap, setRouteAvgMap] = useState<Map<string, number>>(new Map())
   const [fromCity, setFromCity] = useState('')
   const [toCity, setToCity] = useState('')
   const [results, setResults] = useState<SearchResults>({ exact: [], geo: [], composite: null })
@@ -54,12 +49,11 @@ export default function CarrierFinderApp() {
     async function init() {
       try {
         setLoading(true)
-        const [driverRows, cityNames, lineChains, routeRatings, deals] = await Promise.all([
+        const [driverRows, cityNames, lineChains, routeRatings] = await Promise.all([
           loadDriversCsv(),
           loadCitiesCsv(),
           loadLinePaths(),
           loadRouteRatings(),
-          loadDealsCsv(),
         ])
         if (cancelled) return
         lineChainsRef.current = lineChains
@@ -80,13 +74,20 @@ export default function CarrierFinderApp() {
               .filter(Boolean)
           )
         ).sort()
-        setRouteCostMap(routeCosts)
-        setDriverCostMap(dealAggregate)
+        const avgMap = new Map<string, number>()
+        for (const rating of routeRatings) {
+          const parts = splitChain(rating.route)
+          if (parts.length < 2) continue
+          const from = parts[0]
+          const to = parts[parts.length - 1]
+          if (!from || !to) continue
+          const avg = Number(rating.avgBid)
+          if (!Number.isFinite(avg) || avg <= 0) continue
+          avgMap.set(`${from}|${to}`, avg)
+        }
         setDrivers(processed)
         setCities(normalizedCities)
-        setEstimatedCost(null)
-        setDriverCosts(new Map())
-        setLastRoute(null)
+        setRouteAvgMap(avgMap)
         setError(null)
       } catch (e: any) {
         console.error(e)
@@ -104,6 +105,10 @@ export default function CarrierFinderApp() {
   const canSearch = !loading && fromCity.trim() && toCity.trim()
 
   function getDriverName(id: number): string { return drivers.find((d) => d.id === id)?.name || '' }
+  const getAvgBid = React.useCallback(
+    (from: string, to: string) => routeAvgMap.get(`${from}|${to}`) ?? null,
+    [routeAvgMap],
+  )
 
   const getDriverCostValue = React.useCallback(
     (id: number, from: string, to: string): number | null => {
@@ -328,8 +333,8 @@ export default function CarrierFinderApp() {
                         : [results.composite!]
                     }
                     getDriverName={getDriverName}
-                    getDriverCost={getDriverCostValue}
                     onSelectDriver={(id) => setSelectedDriverId(id)}
+                    getAvgBid={getAvgBid}
                   />
                 </div>
               )}
