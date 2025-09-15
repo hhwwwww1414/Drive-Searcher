@@ -27,8 +27,6 @@ export default function RatingsPage() {
   const [routeDealsMin, setRouteDealsMin] = useState('')
   // carrier filters
   const [carrierQuery, setCarrierQuery] = useState('')
-  const [carrierRatingMin, setCarrierRatingMin] = useState('')
-  const [carrierRatingMax, setCarrierRatingMax] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -126,13 +124,10 @@ export default function RatingsPage() {
         </>
       )
     }
-    const min = carrierRatingMin ? Number(carrierRatingMin) : -Infinity
-    const max = carrierRatingMax ? Number(carrierRatingMax) : Infinity
     const filtered = carriers.filter(
       (c) =>
-        c.carrier.toLowerCase().includes(carrierQuery.toLowerCase()) &&
-        c.rating >= min &&
-        c.rating <= max
+        c.name.toLowerCase().includes(carrierQuery.toLowerCase()) ||
+        c.phone.includes(carrierQuery)
     )
     return (
       <>
@@ -142,20 +137,6 @@ export default function RatingsPage() {
             onChange={(e) => setCarrierQuery(e.target.value)}
             placeholder="Имя или телефон"
             className="border px-2 py-1 rounded"
-          />
-          <input
-            type="number"
-            value={carrierRatingMin}
-            onChange={(e) => setCarrierRatingMin(e.target.value)}
-            placeholder="Мин. рейтинг"
-            className="border px-2 py-1 rounded w-32"
-          />
-          <input
-            type="number"
-            value={carrierRatingMax}
-            onChange={(e) => setCarrierRatingMax(e.target.value)}
-            placeholder="Макс. рейтинг"
-            className="border px-2 py-1 rounded w-32"
           />
         </div>
         {renderCarrierTable(filtered)}
@@ -261,29 +242,21 @@ function renderCarrierTable(rows: DriverRating[]) {
       <table className="min-w-full text-sm">
         <thead>
           <tr>
-            <th className="px-2 py-1 text-left">Перевозчик</th>
-            <th className="px-2 py-1 text-left">Рейтинг</th>
-            <th className="px-2 py-1 text-left">Сегментов</th>
-            <th className="px-2 py-1 text-left">Сделок</th>
-            <th className="px-2 py-1 text-left">Сумма ставок</th>
-            <th className="px-2 py-1 text-left">Средняя ставка</th>
-            <th className="px-2 py-1 text-left">Маршрутов</th>
-            <th className="px-2 py-1 text-left">Городов</th>
-            <th className="px-2 py-1 text-left">Топ-маршрут</th>
+            <th className="px-2 py-1 text-left">ФИО</th>
+            <th className="px-2 py-1 text-left">Телефон</th>
+            <th className="px-2 py-1 text-left">Количество сделок</th>
+            <th className="px-2 py-1 text-left">Общая сумма</th>
+            <th className="px-2 py-1 text-left">Доступные маршруты</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={i} className="odd:bg-gray-50">
-              <td className="px-2 py-1 whitespace-nowrap">{r.carrier}</td>
-              <td className="px-2 py-1">{r.rating}</td>
-              <td className="px-2 py-1">{r.segments}</td>
+              <td className="px-2 py-1 whitespace-nowrap">{r.name}</td>
+              <td className="px-2 py-1 whitespace-nowrap">{r.phone}</td>
               <td className="px-2 py-1">{r.deals}</td>
               <td className="px-2 py-1">{r.bidsSum}</td>
-              <td className="px-2 py-1">{r.avgBid}</td>
-              <td className="px-2 py-1">{r.uniqueRoutes}</td>
-              <td className="px-2 py-1">{r.uniqueCities}</td>
-              <td className="px-2 py-1 whitespace-nowrap">{r.topRoute}</td>
+              <td className="px-2 py-1">{r.routes}</td>
             </tr>
           ))}
         </tbody>
