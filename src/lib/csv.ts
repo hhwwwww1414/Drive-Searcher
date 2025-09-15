@@ -1,4 +1,5 @@
 import Papa from 'papaparse'
+import { CityRating, RouteRating, DriverRating } from './types'
 
 export async function fetchCsv(path: string): Promise<Record<string, string>[]> {
   const res = await fetch(path)
@@ -19,6 +20,14 @@ export async function fetchCsv(path: string): Promise<Record<string, string>[]> 
     return out
   })
   return rows
+}
+
+function stripBomRows(rows: Record<string, string>[]): Record<string, string>[] {
+  return rows.map((row) => {
+    const out: Record<string, string> = {}
+    for (const [k, v] of Object.entries(row)) out[k.replace(/\ufeff/g, '')] = v
+    return out
+  })
 }
 
 export async function loadDriversCsv(): Promise<Record<string, string>[]> {
@@ -77,4 +86,48 @@ export async function loadLinePaths(): Promise<string[][]> {
     if (parts.length >= 2) chains.push(parts)
   }
   return chains
+}
+
+export async function loadCityRatings(): Promise<CityRating[]> {
+  const rows = stripBomRows(await fetchCsv('/data/city_ratings.csv'))
+  return rows.map((r) => ({
+    dealsStarted: Number(r['Сделок началось'] || '0'),
+    dealsFinished: Number(r['Сделок завершилось'] || '0'),
+    city: r['Город'] || '',
+    sumStart: Number(r['Сумма ставок (старт)'] || '0'),
+    sumFinish: Number(r['Сумма ставок (финиш)'] || '0'),
+    totalBid: Number(r['Общий объём (ставка)'] || '0'),
+    routesThroughCity: Number(r['Маршрутов через город'] || '0'),
+    fleetDensity: Number(r['Плотность водительского парка'] || '0'),
+    averageBid: Number(r['Средняя ставка (по сделкам города)'] || '0'),
+    rating: Number(r['Рейтинг'] || '0'),
+  }))
+}
+
+export async function loadRouteRatings(): Promise<RouteRating[]> {
+  const rows = stripBomRows(await fetchCsv('/data/route_ratings.csv'))
+  return rows.map((r) => ({
+    route: r['Маршрут (A — B)'] || '',
+    rating: Number(r['Рейтинг'] || '0'),
+    deals: Number(r['Сделок'] || '0'),
+    trips: Number(r['Поездок (строк)'] || '0'),
+    drivers: Number(r['Водителей (уникальных)'] || '0'),
+    bidsSum: Number(r['Сумма ставок'] || '0'),
+    avgBid: Number(r['Средняя ставка'] || '0'),
+  }))
+}
+
+export async function loadDriverRatings(): Promise<DriverRating[]> {
+  const rows = stripBomRows(await fetchCsv('/data/driver_ratings.csv'))
+  return rows.map((r) => ({
+    carrier: r['Перевозчик'] || '',
+    rating: Number(r['Рейтинг'] || '0'),
+    segments: Number(r['Сегментов (поездок)'] || '0'),
+    deals: Number(r['Сделок (уникальных заявок)'] || '0'),
+    bidsSum: Number(r['Сумма ставок'] || '0'),
+    avgBid: Number(r['Средняя ставка'] || '0'),
+    uniqueRoutes: Number(r['Маршрутов (уникальных)'] || '0'),
+    uniqueCities: Number(r['Городов (уникальных)'] || '0'),
+    topRoute: r['Топ-маршрут'] || '',
+  }))
 }

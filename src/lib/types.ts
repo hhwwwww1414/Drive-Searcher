@@ -57,3 +57,38 @@ export type SearchResults = {
   composite: CompositeResult | null
   compositeAlts?: CompositeResult[]
 }
+
+export interface CityRating {
+  dealsStarted: number
+  dealsFinished: number
+  city: string
+  sumStart: number
+  sumFinish: number
+  totalBid: number
+  routesThroughCity: number
+  fleetDensity: number
+  averageBid: number
+  rating: number
+}
+
+export interface RouteRating {
+  route: string
+  rating: number
+  deals: number
+  trips: number
+  drivers: number
+  bidsSum: number
+  avgBid: number
+}
+
+export interface DriverRating {
+  carrier: string
+  rating: number
+  segments: number
+  deals: number
+  bidsSum: number
+  avgBid: number
+  uniqueRoutes: number
+  uniqueCities: number
+  topRoute: string
+}
