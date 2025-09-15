@@ -18,6 +18,17 @@ export default function RatingsPage() {
   const [carriers, setCarriers] = useState<DriverRating[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // city filters
+  const [cityName, setCityName] = useState('')
+  const [cityRatingMin, setCityRatingMin] = useState('')
+  // route filters
+  const [routeFrom, setRouteFrom] = useState('')
+  const [routeTo, setRouteTo] = useState('')
+  const [routeDealsMin, setRouteDealsMin] = useState('')
+  // carrier filters
+  const [carrierQuery, setCarrierQuery] = useState('')
+  const [carrierRatingMin, setCarrierRatingMin] = useState('')
+  const [carrierRatingMax, setCarrierRatingMax] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -50,9 +61,106 @@ export default function RatingsPage() {
   }, [activeTab])
 
   function renderTable() {
-    if (activeTab === 'cities') return renderCityTable(cities)
-    if (activeTab === 'routes') return renderRouteTable(routes)
-    return renderCarrierTable(carriers)
+    if (activeTab === 'cities') {
+      const minRating = cityRatingMin ? Number(cityRatingMin) : -Infinity
+      const filtered = cities.filter(
+        (c) =>
+          c.city.toLowerCase().includes(cityName.toLowerCase()) &&
+          c.rating >= minRating
+      )
+      return (
+        <>
+          <div className="mb-2 flex space-x-2">
+            <input
+              value={cityName}
+              onChange={(e) => setCityName(e.target.value)}
+              placeholder="Название города"
+              className="border px-2 py-1 rounded"
+            />
+            <input
+              type="number"
+              value={cityRatingMin}
+              onChange={(e) => setCityRatingMin(e.target.value)}
+              placeholder="Мин. рейтинг"
+              className="border px-2 py-1 rounded w-32"
+            />
+          </div>
+          {renderCityTable(filtered)}
+        </>
+      )
+    }
+    if (activeTab === 'routes') {
+      const minDeals = routeDealsMin ? Number(routeDealsMin) : -Infinity
+      const filtered = routes.filter((r) => {
+        const [from, to] = r.route.split(' — ').map((s) => s.trim().toLowerCase())
+        return (
+          from.includes(routeFrom.toLowerCase()) &&
+          to.includes(routeTo.toLowerCase()) &&
+          r.deals >= minDeals
+        )
+      })
+      return (
+        <>
+          <div className="mb-2 flex space-x-2">
+            <input
+              value={routeFrom}
+              onChange={(e) => setRouteFrom(e.target.value)}
+              placeholder="Город A"
+              className="border px-2 py-1 rounded"
+            />
+            <input
+              value={routeTo}
+              onChange={(e) => setRouteTo(e.target.value)}
+              placeholder="Город B"
+              className="border px-2 py-1 rounded"
+            />
+            <input
+              type="number"
+              value={routeDealsMin}
+              onChange={(e) => setRouteDealsMin(e.target.value)}
+              placeholder="Мин. сделок"
+              className="border px-2 py-1 rounded w-32"
+            />
+          </div>
+          {renderRouteTable(filtered)}
+        </>
+      )
+    }
+    const min = carrierRatingMin ? Number(carrierRatingMin) : -Infinity
+    const max = carrierRatingMax ? Number(carrierRatingMax) : Infinity
+    const filtered = carriers.filter(
+      (c) =>
+        c.carrier.toLowerCase().includes(carrierQuery.toLowerCase()) &&
+        c.rating >= min &&
+        c.rating <= max
+    )
+    return (
+      <>
+        <div className="mb-2 flex space-x-2">
+          <input
+            value={carrierQuery}
+            onChange={(e) => setCarrierQuery(e.target.value)}
+            placeholder="Имя или телефон"
+            className="border px-2 py-1 rounded"
+          />
+          <input
+            type="number"
+            value={carrierRatingMin}
+            onChange={(e) => setCarrierRatingMin(e.target.value)}
+            placeholder="Мин. рейтинг"
+            className="border px-2 py-1 rounded w-32"
+          />
+          <input
+            type="number"
+            value={carrierRatingMax}
+            onChange={(e) => setCarrierRatingMax(e.target.value)}
+            placeholder="Макс. рейтинг"
+            className="border px-2 py-1 rounded w-32"
+          />
+        </div>
+        {renderCarrierTable(filtered)}
+      </>
+    )
   }
 
   return (
