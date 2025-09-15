@@ -21,12 +21,37 @@ export default function RatingsPage() {
   // city filters
   const [cityName, setCityName] = useState('')
   const [cityRatingMin, setCityRatingMin] = useState('')
+  const [cityDealsStartedMin, setCityDealsStartedMin] = useState('')
+  const [cityDealsFinishedMin, setCityDealsFinishedMin] = useState('')
+  const [cityBidsStartMin, setCityBidsStartMin] = useState('')
+  const [cityBidsFinishMin, setCityBidsFinishMin] = useState('')
+  const [cityBidsTotalMin, setCityBidsTotalMin] = useState('')
+  const [cityRoutesMin, setCityRoutesMin] = useState('')
+  const [cityFleetDensityMin, setCityFleetDensityMin] = useState('')
+  const [cityAvgBidMin, setCityAvgBidMin] = useState('')
   // route filters
   const [routeFrom, setRouteFrom] = useState('')
   const [routeTo, setRouteTo] = useState('')
   const [routeDealsMin, setRouteDealsMin] = useState('')
   // carrier filters
   const [carrierQuery, setCarrierQuery] = useState('')
+
+  function clearFilters() {
+    setCityName('')
+    setCityRatingMin('')
+    setCityDealsStartedMin('')
+    setCityDealsFinishedMin('')
+    setCityBidsStartMin('')
+    setCityBidsFinishMin('')
+    setCityBidsTotalMin('')
+    setCityRoutesMin('')
+    setCityFleetDensityMin('')
+    setCityAvgBidMin('')
+    setRouteFrom('')
+    setRouteTo('')
+    setRouteDealsMin('')
+    setCarrierQuery('')
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -61,14 +86,38 @@ export default function RatingsPage() {
   function renderTable() {
     if (activeTab === 'cities') {
       const minRating = cityRatingMin ? Number(cityRatingMin) : -Infinity
+      const minDealsStarted = cityDealsStartedMin
+        ? Number(cityDealsStartedMin)
+        : -Infinity
+      const minDealsFinished = cityDealsFinishedMin
+        ? Number(cityDealsFinishedMin)
+        : -Infinity
+      const minBidsStart = cityBidsStartMin ? Number(cityBidsStartMin) : -Infinity
+      const minBidsFinish = cityBidsFinishMin
+        ? Number(cityBidsFinishMin)
+        : -Infinity
+      const minBidsTotal = cityBidsTotalMin ? Number(cityBidsTotalMin) : -Infinity
+      const minRoutes = cityRoutesMin ? Number(cityRoutesMin) : -Infinity
+      const minFleetDensity = cityFleetDensityMin
+        ? Number(cityFleetDensityMin)
+        : -Infinity
+      const minAvgBid = cityAvgBidMin ? Number(cityAvgBidMin) : -Infinity
       const filtered = cities.filter(
         (c) =>
           c.city.toLowerCase().includes(cityName.toLowerCase()) &&
-          c.rating >= minRating
+          c.rating >= minRating &&
+          c.dealsStarted >= minDealsStarted &&
+          c.dealsFinished >= minDealsFinished &&
+          c.bidsStart >= minBidsStart &&
+          c.bidsFinish >= minBidsFinish &&
+          c.bidsTotal >= minBidsTotal &&
+          c.routes >= minRoutes &&
+          c.fleetDensity >= minFleetDensity &&
+          c.avgBid >= minAvgBid
       )
       return (
         <>
-          <div className="mb-2 flex space-x-2">
+          <div className="mb-2 flex flex-wrap gap-2 items-center">
             <input
               value={cityName}
               onChange={(e) => setCityName(e.target.value)}
@@ -82,6 +131,65 @@ export default function RatingsPage() {
               placeholder="Мин. рейтинг"
               className="border px-2 py-1 rounded w-32"
             />
+            <input
+              type="number"
+              value={cityDealsStartedMin}
+              onChange={(e) => setCityDealsStartedMin(e.target.value)}
+              placeholder="Сделок началось ≥"
+              className="border px-2 py-1 rounded w-32"
+            />
+            <input
+              type="number"
+              value={cityDealsFinishedMin}
+              onChange={(e) => setCityDealsFinishedMin(e.target.value)}
+              placeholder="Сделок завершилось ≥"
+              className="border px-2 py-1 rounded w-32"
+            />
+            <input
+              type="number"
+              value={cityBidsStartMin}
+              onChange={(e) => setCityBidsStartMin(e.target.value)}
+              placeholder="Сумма ставок (старт) ≥"
+              className="border px-2 py-1 rounded w-40"
+            />
+            <input
+              type="number"
+              value={cityBidsFinishMin}
+              onChange={(e) => setCityBidsFinishMin(e.target.value)}
+              placeholder="Сумма ставок (финиш) ≥"
+              className="border px-2 py-1 rounded w-40"
+            />
+            <input
+              type="number"
+              value={cityBidsTotalMin}
+              onChange={(e) => setCityBidsTotalMin(e.target.value)}
+              placeholder="Сумма ставок (итого) ≥"
+              className="border px-2 py-1 rounded w-40"
+            />
+            <input
+              type="number"
+              value={cityRoutesMin}
+              onChange={(e) => setCityRoutesMin(e.target.value)}
+              placeholder="Маршрутов ≥"
+              className="border px-2 py-1 rounded w-32"
+            />
+            <input
+              type="number"
+              value={cityFleetDensityMin}
+              onChange={(e) => setCityFleetDensityMin(e.target.value)}
+              placeholder="Плотность парка ≥"
+              className="border px-2 py-1 rounded w-32"
+            />
+            <input
+              type="number"
+              value={cityAvgBidMin}
+              onChange={(e) => setCityAvgBidMin(e.target.value)}
+              placeholder="Средняя ставка ≥"
+              className="border px-2 py-1 rounded w-32"
+            />
+            <button onClick={clearFilters} className="border px-2 py-1 rounded">
+              Сбросить
+            </button>
           </div>
           {renderCityTable(filtered)}
         </>
@@ -99,7 +207,7 @@ export default function RatingsPage() {
       })
       return (
         <>
-          <div className="mb-2 flex space-x-2">
+          <div className="mb-2 flex flex-wrap gap-2">
             <input
               value={routeFrom}
               onChange={(e) => setRouteFrom(e.target.value)}
@@ -119,6 +227,9 @@ export default function RatingsPage() {
               placeholder="Мин. сделок"
               className="border px-2 py-1 rounded w-32"
             />
+            <button onClick={clearFilters} className="border px-2 py-1 rounded">
+              Сбросить
+            </button>
           </div>
           {renderRouteTable(filtered)}
         </>
@@ -131,13 +242,16 @@ export default function RatingsPage() {
     )
     return (
       <>
-        <div className="mb-2 flex space-x-2">
+        <div className="mb-2 flex flex-wrap gap-2">
           <input
             value={carrierQuery}
             onChange={(e) => setCarrierQuery(e.target.value)}
             placeholder="Имя или телефон"
             className="border px-2 py-1 rounded"
           />
+          <button onClick={clearFilters} className="border px-2 py-1 rounded">
+            Сбросить
+          </button>
         </div>
         {renderCarrierTable(filtered)}
       </>
