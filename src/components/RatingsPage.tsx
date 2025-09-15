@@ -32,7 +32,11 @@ export default function RatingsPage() {
   // route filters
   const [routeFrom, setRouteFrom] = useState('')
   const [routeTo, setRouteTo] = useState('')
-  const [routeDealsMin, setRouteDealsMin] = useState('')
+  const [routeRatingMin, setRouteRatingMin] = useState('')
+  const [routeTripsMin, setRouteTripsMin] = useState('')
+  const [routeDriversMin, setRouteDriversMin] = useState('')
+  const [routeBidsSumMin, setRouteBidsSumMin] = useState('')
+  const [routeAvgBidMin, setRouteAvgBidMin] = useState('')
   // carrier filters
   const [carrierQuery, setCarrierQuery] = useState('')
 
@@ -49,7 +53,11 @@ export default function RatingsPage() {
     setCityAvgBidMin('')
     setRouteFrom('')
     setRouteTo('')
-    setRouteDealsMin('')
+    setRouteRatingMin('')
+    setRouteTripsMin('')
+    setRouteDriversMin('')
+    setRouteBidsSumMin('')
+    setRouteAvgBidMin('')
     setCarrierQuery('')
   }
 
@@ -196,13 +204,21 @@ export default function RatingsPage() {
       )
     }
     if (activeTab === 'routes') {
-      const minDeals = routeDealsMin ? Number(routeDealsMin) : -Infinity
+      const minRating = routeRatingMin ? Number(routeRatingMin) : -Infinity
+      const minTrips = routeTripsMin ? Number(routeTripsMin) : -Infinity
+      const minDrivers = routeDriversMin ? Number(routeDriversMin) : -Infinity
+      const minBidsSum = routeBidsSumMin ? Number(routeBidsSumMin) : -Infinity
+      const minAvgBid = routeAvgBidMin ? Number(routeAvgBidMin) : -Infinity
       const filtered = routes.filter((r) => {
         const [from, to] = r.route.split(' — ').map((s) => s.trim().toLowerCase())
         return (
           from.includes(routeFrom.toLowerCase()) &&
           to.includes(routeTo.toLowerCase()) &&
-          r.deals >= minDeals
+          r.rating >= minRating &&
+          r.trips >= minTrips &&
+          r.drivers >= minDrivers &&
+          r.bidsSum >= minBidsSum &&
+          r.avgBid >= minAvgBid
         )
       })
       return (
@@ -211,21 +227,49 @@ export default function RatingsPage() {
             <input
               value={routeFrom}
               onChange={(e) => setRouteFrom(e.target.value)}
-              placeholder="Город A"
+              placeholder="Город отправления"
               className="border px-2 py-1 rounded"
             />
             <input
               value={routeTo}
               onChange={(e) => setRouteTo(e.target.value)}
-              placeholder="Город B"
+              placeholder="Город назначения"
               className="border px-2 py-1 rounded"
             />
             <input
               type="number"
-              value={routeDealsMin}
-              onChange={(e) => setRouteDealsMin(e.target.value)}
-              placeholder="Мин. сделок"
+              value={routeRatingMin}
+              onChange={(e) => setRouteRatingMin(e.target.value)}
+              placeholder="Мин. рейтинг"
               className="border px-2 py-1 rounded w-32"
+            />
+            <input
+              type="number"
+              value={routeTripsMin}
+              onChange={(e) => setRouteTripsMin(e.target.value)}
+              placeholder="Поездок ≥"
+              className="border px-2 py-1 rounded w-32"
+            />
+            <input
+              type="number"
+              value={routeDriversMin}
+              onChange={(e) => setRouteDriversMin(e.target.value)}
+              placeholder="Водителей ≥"
+              className="border px-2 py-1 rounded w-32"
+            />
+            <input
+              type="number"
+              value={routeBidsSumMin}
+              onChange={(e) => setRouteBidsSumMin(e.target.value)}
+              placeholder="Сумма ставок ≥"
+              className="border px-2 py-1 rounded w-36"
+            />
+            <input
+              type="number"
+              value={routeAvgBidMin}
+              onChange={(e) => setRouteAvgBidMin(e.target.value)}
+              placeholder="Средняя ставка ≥"
+              className="border px-2 py-1 rounded w-36"
             />
             <button onClick={clearFilters} className="border px-2 py-1 rounded">
               Сбросить
@@ -327,20 +371,22 @@ function renderRouteTable(rows: RouteRating[]) {
         <thead>
           <tr>
             <th className="px-2 py-1 text-left">Маршрут</th>
-            <th className="px-2 py-1 text-left">Сделок</th>
+            <th className="px-2 py-1 text-left">Рейтинг</th>
+            <th className="px-2 py-1 text-left">Поездок</th>
+            <th className="px-2 py-1 text-left">Водителей</th>
             <th className="px-2 py-1 text-left">Сумма ставок</th>
             <th className="px-2 py-1 text-left">Средняя ставка</th>
-            <th className="px-2 py-1 text-left">Водителей</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={i} className="odd:bg-gray-50">
               <td className="px-2 py-1 whitespace-nowrap">{r.route}</td>
-              <td className="px-2 py-1">{r.deals}</td>
+              <td className="px-2 py-1">{r.rating}</td>
+              <td className="px-2 py-1">{r.trips}</td>
+              <td className="px-2 py-1">{r.drivers}</td>
               <td className="px-2 py-1">{r.bidsSum}</td>
               <td className="px-2 py-1">{r.avgBid}</td>
-              <td className="px-2 py-1">{r.drivers}</td>
             </tr>
           ))}
         </tbody>
