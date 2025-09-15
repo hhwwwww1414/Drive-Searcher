@@ -1,7 +1,7 @@
 import React from 'react'
 import { CompositeResult, CompositeSegment } from '../lib/types'
 import { clearHighlight, highlightPath, highlightSegment } from '../lib/map'
-import { formatCurrency } from '../lib/format'
+import { formatCurrency as formatCurrencyFull } from '../lib/format'
 
 type Props = {
   variants: CompositeResult[]
@@ -11,7 +11,7 @@ type Props = {
   getAvgBid?: (from: string, to: string) => number | null
 }
 
-export default function CompositePanel({ variants, getDriverName, onSelectDriver, getAvgBid }: Props) {
+export default function CompositePanel({ variants, getDriverName, getDriverCost, onSelectDriver, getAvgBid }: Props) {
   const [expandedList, setExpandedList] = React.useState(false)
   const [selectedIdx, setSelectedIdx] = React.useState(0)
   // per-segment driver selection map
@@ -70,9 +70,24 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
     () => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }),
     [],
   )
-  const formatCurrency = React.useCallback(
+  const formatCurrencyShort = React.useCallback(
     (value: number) => `${currencyFormatter.format(Math.round(value))} ₽`,
     [currencyFormatter],
+  )
+
+  const buildDriverLabel = React.useCallback(
+    (id: number, from: string, to: string) => {
+      const name = getDriverName(id) || `Перевозчик #${id}`
+      const cost = getDriverCost ? getDriverCost(id, from, to) : null
+      let formattedCost: string | null = null
+      if (cost != null && Number.isFinite(cost)) {
+        formattedCost = formatCurrencyFull(cost)
+      }
+      const label = formattedCost ? `${name} · ${formattedCost}` : name
+      const tooltip = formattedCost ? `${name} • Средняя цена: ${formattedCost}` : name
+      return { label, tooltip }
+    },
+    [getDriverCost, getDriverName],
   )
 
   const estimateSegmentCost = React.useCallback(
@@ -140,7 +155,7 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
                   <div className="text-xs text-neutral-600">Длина: {nodesCount(v)} узлов • Пересадок: {transfersCount(v)}</div>
                   {approx != null && (
                     <div className="text-xs text-neutral-600 mt-0.5" title="Сумма средних ставок по сегментам">
-                      ≈ {formatCurrency(approx)}
+                      ≈ {formatCurrencyShort(approx)}
                     </div>
                   )}
                 </div>
@@ -169,7 +184,7 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
           </div>
           <div className="text-sm text-neutral-600">Пересадок: {transfersCount(selected)} • Длина: {nodesCount(selected)} узлов</div>
           <div className="text-sm text-neutral-700 mt-1">
-            Примерная стоимость: {selectedCost != null ? `≈ ${formatCurrency(selectedCost)}` : '—'}
+            Примерная стоимость: {selectedCost != null ? `≈ ${formatCurrencyShort(selectedCost)}` : '—'}
           </div>
         </div>
 
@@ -182,13 +197,14 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
             const top = idsSorted.slice(0, 3)
             const rest = idsSorted.slice(3)
             const segCost = estimateSegmentCost(s)
+            const chosenLabel = chosen != null ? buildDriverLabel(chosen, s.from, s.to) : null
             return (
               <div key={`${s.from}-${s.to}-${si}`} className="rounded-xl border border-neutral-200 bg-white/80 p-3">
                 <button className="w-full text-left" onClick={() => highlightSegment(s.path)}>
                   <div className="font-medium">Отрезок {si + 1}: {s.path.join(' — ')}</div>
                   {segCost != null && (
                     <div className="text-xs text-neutral-500 mt-0.5" title="Сумма средних ставок по маршрутам внутри сегмента">
-                      ≈ {formatCurrency(segCost)}
+                      ≈ {formatCurrencyShort(segCost)}
                     </div>
                   )}
                 </button>
@@ -242,7 +258,7 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
                 {chosen != null ? (
                   <div className="mt-3 p-2 rounded-lg bg-neutral-50 border border-neutral-200 text-sm flex items-center justify-between">
                     <div className="truncate" title={chosenLabel?.tooltip}>
-                      Выбран: <span className="font-medium">{chosenLabel?.label}</span>
+                      Выбран: <span className="font-medium">{chosenLabel?.label ?? getDriverName(chosen)}</span>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <button className="text-blue-600 underline" onClick={() => onSelectDriver(chosen)}>Открыть карточку</button>
