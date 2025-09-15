@@ -1,17 +1,17 @@
 import React from 'react'
-import { CompositeResult } from '../lib/types'
+import { CompositeResult, CompositeSegment } from '../lib/types'
 import { clearHighlight, highlightPath, highlightSegment } from '../lib/map'
 
 type Props = {
   variants: CompositeResult[]
   getDriverName: (id: number) => string
   onSelectDriver: (id: number) => void
+  getAvgBid?: (from: string, to: string) => number | null
 }
 
-export default function CompositePanel({ variants, getDriverName, onSelectDriver }: Props) {
+export default function CompositePanel({ variants, getDriverName, onSelectDriver, getAvgBid }: Props) {
   const [expandedList, setExpandedList] = React.useState(false)
   const [selectedIdx, setSelectedIdx] = React.useState(0)
-  const selected = variants[selectedIdx]
   // per-segment driver selection map
   const [segDriver, setSegDriver] = React.useState<Record<number, number | null>>({})
   const [showAllSegments, setShowAllSegments] = React.useState(false)
@@ -64,6 +64,51 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
   const nodesCount = (v: CompositeResult) => v.path.length
   const transferNodes = (v: CompositeResult) => v.segments.slice(0, Math.max(0, v.segments.length - 1)).map(s => s.to)
 
+  const currencyFormatter = React.useMemo(
+    () => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }),
+    [],
+  )
+  const formatCurrency = React.useCallback(
+    (value: number) => `${currencyFormatter.format(Math.round(value))} ₽`,
+    [currencyFormatter],
+  )
+
+  const estimateSegmentCost = React.useCallback(
+    (segment: CompositeSegment): number | null => {
+      if (!getAvgBid || !segment.path || segment.path.length < 2) return null
+      let total = 0
+      for (let i = 0; i < segment.path.length - 1; i++) {
+        const from = segment.path[i]!
+        const to = segment.path[i + 1]!
+        const value = getAvgBid(from, to)
+        if (value == null || Number.isNaN(value)) {
+          return null
+        }
+        total += value
+      }
+      return total
+    },
+    [getAvgBid],
+  )
+
+  const estimateVariantCost = React.useCallback(
+    (variant: CompositeResult): number | null => {
+      if (!variant.segments || variant.segments.length === 0) return null
+      let sum = 0
+      for (const segment of variant.segments) {
+        const segCost = estimateSegmentCost(segment)
+        if (segCost == null) return null
+        sum += segCost
+      }
+      return sum
+    },
+    [estimateSegmentCost],
+  )
+
+  const safeIndex = Math.min(selectedIdx, Math.max(uniqVariants.length - 1, 0))
+  const selected = uniqVariants[safeIndex]!
+  const selectedCost = estimateVariantCost(selected)
+
   function onPickVariant(i: number) {
     setSelectedIdx(i)
     setSegDriver({})
@@ -80,8 +125,9 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
         <ul className="space-y-2 max-h-96 overflow-auto pr-1 w-full">
           {leftItems.map((v, i) => {
             const idx = i
-            const isActive = selectedIdx === idx
+            const isActive = safeIndex === idx
             const route = v.path.join(' — ')
+            const approx = estimateVariantCost(v)
             return (
               <li key={route}
                   className={`card p-3 flex items-start sm:items-center gap-3 min-h-[84px] min-w-0 overflow-hidden ${isActive ? 'border-2 border-primary-500' : ''}`}
@@ -90,6 +136,11 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate" title={route}>Путь {idx + 1}: {route}</div>
                   <div className="text-xs text-neutral-600">Длина: {nodesCount(v)} узлов • Пересадок: {transfersCount(v)}</div>
+                  {approx != null && (
+                    <div className="text-xs text-neutral-600 mt-0.5" title="Сумма средних ставок по сегментам">
+                      ≈ {formatCurrency(approx)}
+                    </div>
+                  )}
                 </div>
                 <div className="flex sm:flex-row flex-col items-stretch sm:items-center gap-1 sm:gap-2 shrink-0">
                   <button className="btn btn-ghost px-2 py-1 text-xs whitespace-nowrap" onClick={() => { onPickVariant(idx); }}>
@@ -112,9 +163,12 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
         <div className="mb-3">
           <span className="badge mr-2" title="Составной">СОСТАВНОЙ</span>
           <div className="text-lg font-semibold mt-1 truncate" title={selected.path.join(' — ')}>
-            Путь {selectedIdx + 1}: {selected.path.join(' — ')}
+            Путь {safeIndex + 1}: {selected.path.join(' — ')}
           </div>
           <div className="text-sm text-neutral-600">Пересадок: {transfersCount(selected)} • Длина: {nodesCount(selected)} узлов</div>
+          <div className="text-sm text-neutral-700 mt-1">
+            Примерная стоимость: {selectedCost != null ? `≈ ${formatCurrency(selectedCost)}` : '—'}
+          </div>
         </div>
 
         {/* Segments */}
@@ -125,10 +179,16 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
             const chosen = segDriver[si] ?? (s.driverId ?? null)
             const top = idsSorted.slice(0, 3)
             const rest = idsSorted.slice(3)
+            const segCost = estimateSegmentCost(s)
             return (
               <div key={`${s.from}-${s.to}-${si}`} className="rounded-xl border border-neutral-200 bg-white/80 p-3">
                 <button className="w-full text-left" onClick={() => highlightSegment(s.path)}>
                   <div className="font-medium">Отрезок {si + 1}: {s.path.join(' — ')}</div>
+                  {segCost != null && (
+                    <div className="text-xs text-neutral-500 mt-0.5" title="Сумма средних ставок по маршрутам внутри сегмента">
+                      ≈ {formatCurrency(segCost)}
+                    </div>
+                  )}
                 </button>
                 <div className="mt-2">
                   <div className="text-xs uppercase tracking-wide text-neutral-500 mb-1">Перевозчики</div>
@@ -216,6 +276,11 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
         <div className="text-xs text-neutral-500 mt-2">
           Пересадки — в узлах: {transferNodes(selected).join(', ') || '—'}
         </div>
+        {getAvgBid && (
+          <div className="text-xs text-neutral-400 mt-1">
+            Стоимость рассчитана как сумма средних ставок по отрезкам маршрута.
+          </div>
+        )}
       </div>
     </div>
   )

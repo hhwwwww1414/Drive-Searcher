@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { loadCitiesCsv, loadDriversCsv, loadLinePaths } from '../lib/csv'
+import { loadCitiesCsv, loadDriversCsv, loadLinePaths, loadRouteRatings } from '../lib/csv'
 import { processDrivers, buildIndices } from '../lib/indexer'
 import { ExactResult, GeoResult, SearchResults } from '../lib/types'
-import { normalizeCity } from '../lib/normalize'
+import { normalizeCity, splitChain } from '../lib/normalize'
 import { searchComposite, searchCompositeMulti, searchExact, searchGeo } from '../lib/search'
 import { SearchIcon } from './ui/icons'
 import CompositePanel from './CompositePanel'
@@ -14,6 +14,7 @@ export default function CarrierFinderApp() {
   const [error, setError] = useState<string | null>(null)
   const [cities, setCities] = useState<string[]>([])
   const [drivers, setDrivers] = useState<DriverView[]>([])
+  const [routeAvgMap, setRouteAvgMap] = useState<Map<string, number>>(new Map())
   const [fromCity, setFromCity] = useState('')
   const [toCity, setToCity] = useState('')
   const [results, setResults] = useState<SearchResults>({ exact: [], geo: [], composite: null })
@@ -35,10 +36,11 @@ export default function CarrierFinderApp() {
     async function init() {
       try {
         setLoading(true)
-        const [driverRows, cityNames, lineChains] = await Promise.all([
+        const [driverRows, cityNames, lineChains, routeRatings] = await Promise.all([
           loadDriversCsv(),
           loadCitiesCsv(),
           loadLinePaths(),
+          loadRouteRatings(),
         ])
         if (cancelled) return
         lineChainsRef.current = lineChains
@@ -50,8 +52,20 @@ export default function CarrierFinderApp() {
               .filter(Boolean)
           )
         ).sort()
+        const avgMap = new Map<string, number>()
+        for (const rating of routeRatings) {
+          const parts = splitChain(rating.route)
+          if (parts.length < 2) continue
+          const from = parts[0]
+          const to = parts[parts.length - 1]
+          if (!from || !to) continue
+          const avg = Number(rating.avgBid)
+          if (!Number.isFinite(avg) || avg <= 0) continue
+          avgMap.set(`${from}|${to}`, avg)
+        }
         setDrivers(processed)
         setCities(normalizedCities)
+        setRouteAvgMap(avgMap)
         setError(null)
       } catch (e: any) {
         console.error(e)
@@ -69,6 +83,10 @@ export default function CarrierFinderApp() {
   const canSearch = !loading && fromCity.trim() && toCity.trim()
 
   function getDriverName(id: number): string { return drivers.find((d) => d.id === id)?.name || '' }
+  const getAvgBid = React.useCallback(
+    (from: string, to: string) => routeAvgMap.get(`${from}|${to}`) ?? null,
+    [routeAvgMap],
+  )
 
   function onSearch() {
     const A = normalizeCity(fromCity)
@@ -231,11 +249,19 @@ export default function CarrierFinderApp() {
               {showComposite && results.composite && (
                 <div className="md:col-span-2 min-w-0">
                   <CompositePanel
-                  variants={(results.compositeAlts && results.compositeAlts.length
-                    ? [results.composite!, ...results.compositeAlts.filter(v => v.path.join('>') !== results.composite!.path.join('>'))]
-                    : [results.composite!])}
-                  getDriverName={getDriverName}
-                  onSelectDriver={(id) => setSelectedDriverId(id)}
+                    variants={
+                      results.compositeAlts && results.compositeAlts.length
+                        ? [
+                            results.composite!,
+                            ...results.compositeAlts.filter(
+                              (v) => v.path.join('>') !== results.composite!.path.join('>')
+                            ),
+                          ]
+                        : [results.composite!]
+                    }
+                    getDriverName={getDriverName}
+                    onSelectDriver={(id) => setSelectedDriverId(id)}
+                    getAvgBid={getAvgBid}
                   />
                 </div>
               )}
