@@ -1,14 +1,16 @@
 import React from 'react'
 import { CompositeResult } from '../lib/types'
 import { clearHighlight, highlightPath, highlightSegment } from '../lib/map'
+import { formatCurrency } from '../lib/format'
 
 type Props = {
   variants: CompositeResult[]
   getDriverName: (id: number) => string
+  getDriverCost: (id: number, from: string, to: string) => number | null | undefined
   onSelectDriver: (id: number) => void
 }
 
-export default function CompositePanel({ variants, getDriverName, onSelectDriver }: Props) {
+export default function CompositePanel({ variants, getDriverName, getDriverCost, onSelectDriver }: Props) {
   const [expandedList, setExpandedList] = React.useState(false)
   const [selectedIdx, setSelectedIdx] = React.useState(0)
   const selected = variants[selectedIdx]
@@ -63,6 +65,14 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
   const transfersCount = (v: CompositeResult) => Math.max(0, (v.segments?.length || 0) - 1)
   const nodesCount = (v: CompositeResult) => v.path.length
   const transferNodes = (v: CompositeResult) => v.segments.slice(0, Math.max(0, v.segments.length - 1)).map(s => s.to)
+
+  function buildDriverLabel(id: number, from: string, to: string): { label: string; tooltip: string } {
+    const name = getDriverName(id)
+    const cost = getDriverCost(id, from, to)
+    if (cost == null) return { label: name, tooltip: name }
+    const formatted = formatCurrency(cost)
+    return { label: `${name} (${formatted})`, tooltip: `${name} • ${formatted}` }
+  }
 
   function onPickVariant(i: number) {
     setSelectedIdx(i)
@@ -125,6 +135,7 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
             const chosen = segDriver[si] ?? (s.driverId ?? null)
             const top = idsSorted.slice(0, 3)
             const rest = idsSorted.slice(3)
+            const chosenLabel = chosen != null ? buildDriverLabel(chosen, s.from, s.to) : null
             return (
               <div key={`${s.from}-${s.to}-${si}`} className="rounded-xl border border-neutral-200 bg-white/80 p-3">
                 <button className="w-full text-left" onClick={() => highlightSegment(s.path)}>
@@ -133,29 +144,39 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
                 <div className="mt-2">
                   <div className="text-xs uppercase tracking-wide text-neutral-500 mb-1">Перевозчики</div>
                   <div className="flex flex-wrap gap-2">
-                    {top.map((id) => (
-                      <button key={id}
-                              title={getDriverName(id)}
-                              className={`chip ${chosen === id ? 'chip-active' : ''}`}
-                              onClick={() => setSegDriver((m) => ({ ...m, [si]: id }))}>
-                        {chosen === id ? <span className="mr-1">✓</span> : null}
-                        {getDriverName(id)}
-                      </button>
-                    ))}
+                    {top.map((id) => {
+                      const { label, tooltip } = buildDriverLabel(id, s.from, s.to)
+                      return (
+                        <button
+                          key={id}
+                          title={tooltip}
+                          className={`chip ${chosen === id ? 'chip-active' : ''}`}
+                          onClick={() => setSegDriver((m) => ({ ...m, [si]: id }))}
+                        >
+                          {chosen === id ? <span className="mr-1">✓</span> : null}
+                          {label}
+                        </button>
+                      )
+                    })}
                     {rest.length > 0 && (
                       <details className="relative">
                         <summary className="chip cursor-pointer select-none list-none">+ ещё {rest.length}</summary>
                         <div className="mt-2 p-2 rounded-xl border border-neutral-200 bg-white/95 shadow-elev-2 max-w-[24rem] z-10">
                           <div className="flex flex-wrap gap-2 max-h-48 overflow-auto">
-                            {rest.slice(0, 50).map((id) => (
-                              <button key={id}
-                                      title={getDriverName(id)}
-                                      className={`chip ${chosen === id ? 'chip-active' : ''}`}
-                                      onClick={() => setSegDriver((m) => ({ ...m, [si]: id }))}>
-                                {chosen === id ? <span className="mr-1">✓</span> : null}
-                                {getDriverName(id)}
-                              </button>
-                            ))}
+                            {rest.slice(0, 50).map((id) => {
+                              const { label, tooltip } = buildDriverLabel(id, s.from, s.to)
+                              return (
+                                <button
+                                  key={id}
+                                  title={tooltip}
+                                  className={`chip ${chosen === id ? 'chip-active' : ''}`}
+                                  onClick={() => setSegDriver((m) => ({ ...m, [si]: id }))}
+                                >
+                                  {chosen === id ? <span className="mr-1">✓</span> : null}
+                                  {label}
+                                </button>
+                              )
+                            })}
                             {rest.length > 50 && (
                               <div className="text-xs text-neutral-500">Ещё {rest.length - 50}</div>
                             )}
@@ -169,8 +190,8 @@ export default function CompositePanel({ variants, getDriverName, onSelectDriver
                 {/* Selected driver mini-card */}
                 {chosen != null ? (
                   <div className="mt-3 p-2 rounded-lg bg-neutral-50 border border-neutral-200 text-sm flex items-center justify-between">
-                    <div className="truncate" title={getDriverName(chosen)}>
-                      Выбран: <span className="font-medium">{getDriverName(chosen)}</span>
+                    <div className="truncate" title={chosenLabel?.tooltip}>
+                      Выбран: <span className="font-medium">{chosenLabel?.label}</span>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <button className="text-blue-600 underline" onClick={() => onSelectDriver(chosen)}>Открыть карточку</button>
