@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { loadCitiesCsv, loadDriversCsv, loadLinePaths, loadRouteRatings } from '../lib/csv'
+import { loadCitiesCsv, loadDealsCsv, loadDriversCsv, loadLinePaths, loadRouteRatings } from '../lib/csv'
 import { processDrivers, buildIndices } from '../lib/indexer'
 import { ExactResult, GeoResult, SearchResults } from '../lib/types'
 import { normalizeCity, splitChain } from '../lib/normalize'
@@ -49,11 +49,12 @@ export default function CarrierFinderApp() {
     async function init() {
       try {
         setLoading(true)
-        const [driverRows, cityNames, lineChains, routeRatings] = await Promise.all([
+        const [driverRows, cityNames, lineChains, routeRatings, deals] = await Promise.all([
           loadDriversCsv(),
           loadCitiesCsv(),
           loadLinePaths(),
           loadRouteRatings(),
+          loadDealsCsv(),
         ])
         if (cancelled) return
         lineChainsRef.current = lineChains
@@ -88,6 +89,8 @@ export default function CarrierFinderApp() {
         setDrivers(processed)
         setCities(normalizedCities)
         setRouteAvgMap(avgMap)
+        setRouteCostMap(routeCosts)
+        setDriverCostMap(dealAggregate)
         setError(null)
       } catch (e: any) {
         console.error(e)
@@ -321,21 +324,22 @@ export default function CarrierFinderApp() {
               </ResultColumn>
               {showComposite && results.composite && (
                 <div className="md:col-span-2 min-w-0">
-                  <CompositePanel
-                    variants={
-                      results.compositeAlts && results.compositeAlts.length
-                        ? [
-                            results.composite!,
-                            ...results.compositeAlts.filter(
-                              (v) => v.path.join('>') !== results.composite!.path.join('>')
-                            ),
-                          ]
-                        : [results.composite!]
-                    }
-                    getDriverName={getDriverName}
-                    onSelectDriver={(id) => setSelectedDriverId(id)}
-                    getAvgBid={getAvgBid}
-                  />
+                    <CompositePanel
+                      variants={
+                        results.compositeAlts && results.compositeAlts.length
+                          ? [
+                              results.composite!,
+                              ...results.compositeAlts.filter(
+                                (v) => v.path.join('>') !== results.composite!.path.join('>')
+                              ),
+                            ]
+                          : [results.composite!]
+                      }
+                      getDriverName={getDriverName}
+                      getDriverCost={getDriverCostValue}
+                      onSelectDriver={(id) => setSelectedDriverId(id)}
+                      getAvgBid={getAvgBid}
+                    />
                 </div>
               )}
               {showComposite && false && (

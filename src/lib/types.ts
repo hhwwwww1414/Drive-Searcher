@@ -11,6 +11,16 @@ export type Driver = {
   corridors: string[]
 }
 
+export type RouteKey = string
+
+export type Deal = {
+  phone: string
+  driverId?: number
+  from: string
+  to: string
+  cost: number
+}
+
 export type Indices = {
   pairExact: Map<string, Set<number>>
   subpathDir: Map<string, Set<number>>
